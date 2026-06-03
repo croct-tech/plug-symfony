@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<phpunit
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.4/phpunit.xsd"
+        colors="true"
+        backupGlobals="false"
+        beStrictAboutChangesToGlobalState="true"
+        beStrictAboutOutputDuringTests="true"
+        beStrictAboutTestsThatDoNotTestAnything="true"
+        failOnRisky="true"
+        failOnWarning="true"
+        cacheResult="true"
+        bootstrap="vendor/autoload.php"
+        cacheDirectory=".phpunit.cache"
+        backupStaticProperties="false"
+        requireCoverageMetadata="true">
+    <coverage/>
+    <php>
+        <ini name="error_reporting" value="-1"/>
+        <ini name="memory_limit" value="-1"/>
+    </php>
+    <testsuites>
+        <testsuite name="Croct PHP Project Test Suite">
+            <directory>./tests/</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>./src</directory>
+        </include>
+    </source>
+</phpunit>
