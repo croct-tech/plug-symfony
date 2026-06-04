@@ -18,7 +18,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 #[TestDox('The bundle cache behavior')]
 final class CacheTest extends WebTestCase
 {
-    use RestoresErrorHandlers;
+    use RestoresExceptionHandler;
 
     #[TestDox('Marks a personalized response private and writes the session cookies.')]
     public function testPersonalizedResponseIsPrivate(): void

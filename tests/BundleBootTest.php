@@ -21,7 +21,7 @@ use Symfony\Contracts\Service\ResetInterface;
 #[TestDox('The Croct bundle')]
 final class BundleBootTest extends KernelTestCase
 {
-    use RestoresErrorHandlers;
+    use RestoresExceptionHandler;
 
     #[TestDox('Registers the Plug facade and the response subscriber.')]
     public function testRegistersCoreServices(): void
