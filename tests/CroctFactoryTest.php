@@ -23,7 +23,7 @@ final class CroctFactoryTest extends TestCase
 
     private const API_KEY = '11111111-2222-4333-8444-555555555555';
 
-    #[TestDox('Builds a tracking Plug even when there is no current request.')]
+    #[TestDox('Builds the Plug even when there is no current request.')]
     public function testBuildsPlugWithoutRequest(): void
     {
         $factory = new CroctFactory(new RequestStack(), self::APP_ID, self::API_KEY);
@@ -31,7 +31,7 @@ final class CroctFactoryTest extends TestCase
         self::assertInstanceOf(VaryingResponseObserver::class, $factory->getPlug());
     }
 
-    #[TestDox('Builds a tracking Plug from the current request signals.')]
+    #[TestDox('Builds the Plug from the current request signals.')]
     public function testBuildsPlugFromRequest(): void
     {
         $factory = new CroctFactory($this->createRequestStack(), self::APP_ID, self::API_KEY);
@@ -86,7 +86,7 @@ final class CroctFactoryTest extends TestCase
 
         $factory = new CroctFactory($stack, self::APP_ID, self::API_KEY);
 
-        // A tracking call fires the observer callback; a second initialize() call is a no-op.
+        // Using the session fires the observer callback; the second call reuses the cached storage.
         $factory->getPlug()->getClientId();
         $factory->getResponseCookies();
 

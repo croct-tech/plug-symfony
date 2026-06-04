@@ -58,11 +58,6 @@
     {
       "type": "vcs",
       "url": "https://github.com/croct-tech/plug-php"
-    },
-    {
-      "type": "composer",
-      "url": "https://croct.repo.repman.io",
-      "secure-http": true
     }
   ],
   "prefer-stable": true,

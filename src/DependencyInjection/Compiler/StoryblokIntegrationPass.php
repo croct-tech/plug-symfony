@@ -12,10 +12,6 @@ use Symfony\Component\DependencyInjection\Reference;
 
 /**
  * Wires the Croct/Storyblok decorator when both the decorator and the Storyblok service are present.
- *
- * The decorator and the Storyblok interface are referenced by name, so the bundle depends on neither
- * croct/plug-storyblok nor the Storyblok client: the decorator is registered only when its class is
- * installed and the Storyblok Stories API service is in the container.
  */
 final class StoryblokIntegrationPass implements CompilerPassInterface
 {
@@ -36,13 +32,12 @@ final class StoryblokIntegrationPass implements CompilerPassInterface
 
         $definition = new Definition(self::CROCT_STORIES_API);
         $definition->setDecoratedService(self::STORIES_API_INTERFACE);
+
         $definition->setArguments([
             new Reference('.inner'),
             new Reference(Plug::class),
         ]);
 
-        // Explicit args + no autowiring: the container never reflects (and thus never autoloads) the
-        // decorator at compile time; it is loaded only when instantiated, i.e. when installed.
         $definition->setAutowired(false);
         $definition->setAutoconfigured(false);
 

@@ -8,8 +8,7 @@ use Croct\Plug\Plug;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Touches the visitor session, then returns a publicly cacheable response — the bundle must
- * downgrade it to private because it is personalized.
+ * Touches the visitor session, then returns a publicly cacheable response.
  */
 final class PersonalizedController
 {

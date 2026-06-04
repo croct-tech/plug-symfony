@@ -7,8 +7,7 @@ namespace Croct\Plug\Symfony\Tests\Fixtures\Application\Controller;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Returns a publicly cacheable response without touching Croct — the bundle must leave its caching
- * untouched.
+ * Returns a publicly cacheable response without using the plug.
  */
 final class PublicController
 {

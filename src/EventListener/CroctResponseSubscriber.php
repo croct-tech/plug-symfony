@@ -12,11 +12,7 @@ use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
- * Finalizes personalized responses: writes the session cookies and forbids shared caching.
- *
- * It acts only when the request was flagged personalized (see the flag set by {@see CroctFactory}),
- * so pages that never use Croct keep whatever public caching they had. It runs late so it overrides
- * any caching applied earlier (e.g. by a CMS bundle).
+ * Writes the session cookies and headers to the response.
  */
 final class CroctResponseSubscriber implements EventSubscriberInterface
 {
@@ -48,7 +44,7 @@ final class CroctResponseSubscriber implements EventSubscriberInterface
         // Cookies belong on the main response only; fragments must not set them.
         if ($event->isMainRequest()) {
             foreach ($this->factory->getResponseCookies() as $cookie) {
-                $response->headers->setCookie(self::toSymfonyCookie($cookie));
+                $response->headers->setCookie(self::createCookie($cookie));
             }
         }
 
@@ -56,7 +52,7 @@ final class CroctResponseSubscriber implements EventSubscriberInterface
         $response->setPrivate();
     }
 
-    private static function toSymfonyCookie(Cookie $cookie): SymfonyCookie
+    private static function createCookie(Cookie $cookie): SymfonyCookie
     {
         return SymfonyCookie::create(
             $cookie->getName(),

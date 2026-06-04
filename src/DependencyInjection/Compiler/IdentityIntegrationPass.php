@@ -15,10 +15,6 @@ use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
  * Wires the user-identity listener only when Symfony Security is installed and identity is enabled.
- *
- * `Security::class` resolves to a string at compile time and autoloads nothing, so the check is safe
- * even when Symfony Security is absent; {@see CroctIdentityListener} is instantiated (and loaded)
- * only when the listener is actually registered.
  */
 final class IdentityIntegrationPass implements CompilerPassInterface
 {
@@ -28,16 +24,17 @@ final class IdentityIntegrationPass implements CompilerPassInterface
             return;
         }
 
-        // Symfony Security is optional: without it there is no authenticated user to reconcile.
         if (!$container->has(Security::class)) {
             return;
         }
 
         $definition = new Definition(CroctIdentityListener::class);
+
         $definition->setArguments([
             new Reference(CroctFactory::class),
             new Reference(Security::class),
         ]);
+
         $definition->addTag('kernel.event_listener', [
             'event' => KernelEvents::REQUEST,
             'method' => 'onKernelRequest',
@@ -45,11 +42,8 @@ final class IdentityIntegrationPass implements CompilerPassInterface
             'priority' => 6,
         ]);
 
-        // Explicit args + no autowiring: the container never reflects (and thus never autoloads) the
-        // listener at compile time; it is loaded only when instantiated, i.e. when Security is present.
         $definition->setAutowired(false);
         $definition->setAutoconfigured(false);
-
         $container->setDefinition(CroctIdentityListener::class, $definition);
     }
 }

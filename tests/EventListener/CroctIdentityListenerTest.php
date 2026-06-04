@@ -60,7 +60,7 @@ final class CroctIdentityListenerTest extends TestCase
     #[TestDox('Anonymizes the visitor after the user logs out.')]
     public function testAnonymizesAfterLogout(): void
     {
-        $factory = $this->createFactory($this->issueToken('alice'));
+        $factory = $this->createFactory(self::issueToken('alice'));
 
         $listener = new CroctIdentityListener($factory, $this->createSecurity(null));
         $listener->onKernelRequest($this->createRequestEvent());
@@ -71,7 +71,7 @@ final class CroctIdentityListenerTest extends TestCase
     #[TestDox('Leaves the token untouched when the user already matches.')]
     public function testKeepsTokenWhenUserMatches(): void
     {
-        $token = $this->issueToken('alice');
+        $token = self::issueToken('alice');
         $factory = $this->createFactory($token);
 
         $listener = new CroctIdentityListener($factory, $this->createSecurity('alice'));
@@ -109,7 +109,7 @@ final class CroctIdentityListenerTest extends TestCase
         return new CroctFactory($stack, self::APP_ID, self::API_KEY);
     }
 
-    private function issueToken(string $subject): string
+    private static function issueToken(string $subject): string
     {
         return Token::issue(appId: self::APP_ID, subject: $subject, now: 1000)->toString();
     }

@@ -18,11 +18,6 @@ use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * Builds a request-scoped {@see Plug} from the current Symfony request.
- *
- * The facade is wrapped in the SDK's {@see VaryingResponseObserver}, which flags the request whenever
- * the visitor session is used, so {@see CroctResponseSubscriber} can finalize caching and cookies.
- * It keeps the {@see CookieStorage} so the subscriber can flush the cookies and the identity listener
- * can read the current token without flagging the request.
  */
 final class CroctFactory implements ResetInterface
 {
@@ -72,11 +67,7 @@ final class CroctFactory implements ResetInterface
 
     public function getPlug(): Plug
     {
-        $this->initialize();
-
-        \assert($this->plug !== null);
-
-        return $this->plug;
+        return $this->plug ??= $this->createPlug();
     }
 
     /**
@@ -84,11 +75,7 @@ final class CroctFactory implements ResetInterface
      */
     public function getResponseCookies(): array
     {
-        $this->initialize();
-
-        \assert($this->storage !== null);
-
-        return $this->storage->getResponseCookies();
+        return $this->getStorage()->getResponseCookies();
     }
 
     /**
@@ -96,11 +83,7 @@ final class CroctFactory implements ResetInterface
      */
     public function getStoredUserToken(): ?Token
     {
-        $this->initialize();
-
-        \assert($this->storage !== null);
-
-        return $this->storage->getUserToken();
+        return $this->getStorage()->getUserToken();
     }
 
     public function reset(): void
@@ -109,12 +92,13 @@ final class CroctFactory implements ResetInterface
         $this->storage = null;
     }
 
-    private function initialize(): void
+    private function getStorage(): CookieStorage
     {
-        if ($this->plug !== null) {
-            return;
-        }
+        return $this->storage ??= $this->createStorage();
+    }
 
+    private function createStorage(): CookieStorage
+    {
         $request = $this->requestStack->getCurrentRequest();
 
         $configuration = new CookieConfiguration(
@@ -123,9 +107,13 @@ final class CroctFactory implements ResetInterface
             sameSite: \ucfirst($this->cookieSameSite),
         );
 
-        $this->storage = CookieStorage::fromArray($request?->cookies->all() ?? [], $configuration);
+        return CookieStorage::fromArray($request?->cookies->all() ?? [], $configuration);
+    }
 
-        // Build the request context straight from the Symfony request — no PSR-7 bridge needed.
+    private function createPlug(): Plug
+    {
+        $request = $this->requestStack->getCurrentRequest();
+
         $context = $request === null
             ? new RequestContext()
             : new RequestContext(
@@ -136,19 +124,17 @@ final class CroctFactory implements ResetInterface
                 preferredLocale: $this->resolveLocale($request->getPreferredLanguage()),
             );
 
-        // Symfony ships its own PSR-18 client, which the SDK auto-discovers. A null endpoint keeps
-        // the SDK default.
         $croct = Croct::plug(
             appId: $this->appId,
             apiKey: $this->apiKey,
-            storage: $this->storage,
+            storage: $this->getStorage(),
             baseEndpointUrl: $this->baseEndpointUrl,
             context: $context,
         );
 
         $requestStack = $this->requestStack;
 
-        $this->plug = new VaryingResponseObserver($croct, static function () use ($requestStack): void {
+        return new VaryingResponseObserver($croct, static function () use ($requestStack): void {
             $requestStack->getCurrentRequest()?->attributes->set(CroctResponseSubscriber::PERSONALIZED_ATTRIBUTE, true);
         });
     }

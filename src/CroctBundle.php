@@ -16,10 +16,6 @@ use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
 /**
  * Plugs the Croct SDK into Symfony.
- *
- * Locale detection, user identification, and the Storyblok integration are built in but optional:
- * locale and identity can be switched off, and Storyblok self-activates only when its bundle is
- * installed (see {@see StoryblokIntegrationPass} and {@see IdentityIntegrationPass}).
  */
 final class CroctBundle extends AbstractBundle
 {

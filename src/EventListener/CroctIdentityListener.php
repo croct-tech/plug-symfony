@@ -12,12 +12,9 @@ use Symfony\Component\HttpKernel\Event\RequestEvent;
  * Keeps the Croct user token in sync with the authenticated Symfony user.
  *
  * On every main request it compares the firewall's user with the visitor token and, only when they
- * differ, re-identifies (on login) or anonymizes (on logout). The stored token is read directly —
- * never through the tracking facade — so unchanged requests stay publicly cacheable; only a genuine
- * identity transition calls the facade and thus marks the response as varying.
+ * differ, re-identifies (on login) or anonymizes (on logout).
  *
- * It is wired only when Symfony Security is installed and {@see croct.identity.enabled} is true
- * (see {@see \Croct\Plug\Symfony\DependencyInjection\Compiler\IdentityIntegrationPass}).
+ * It is wired only when Symfony Security is installed and {@see croct.identity.enabled} is true.
  */
 final class CroctIdentityListener
 {
