@@ -7,7 +7,12 @@ namespace Croct\Plug\Symfony\Tests;
 use Croct\Plug\Plug;
 use Croct\Plug\Symfony\CroctBundle;
 use Croct\Plug\Symfony\CroctFactory;
+use Croct\Plug\Symfony\CroctScriptProvider;
 use Croct\Plug\Symfony\EventListener\CroctResponseSubscriber;
+use Croct\Plug\Symfony\EventListener\CroctScriptListener;
+use Croct\Plug\Symfony\EventListener\CroctScriptSubscriber;
+use Croct\Plug\Symfony\Twig\CroctScriptExtension;
+use Croct\Plug\Symfony\Twig\CroctScriptRuntime;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\TestCase;
@@ -40,6 +45,12 @@ final class CroctBundleTest extends TestCase
             'storyblok' => [
                 'enabled' => false,
             ],
+            'script' => [
+                'auto_inject' => false,
+                'placement' => 'head',
+                'path' => false,
+                'loader_url' => 'https://example.test/plug.js',
+            ],
         ]);
 
         $arguments = $container->getDefinition(CroctFactory::class)->getArguments();
@@ -58,6 +69,18 @@ final class CroctBundleTest extends TestCase
 
         self::assertTrue($container->hasDefinition(Plug::class));
         self::assertTrue($container->hasDefinition(CroctResponseSubscriber::class));
+
+        // auto_inject is off, so the injector is not registered. The Twig function still is.
+        self::assertFalse($container->hasDefinition(CroctScriptSubscriber::class));
+        self::assertTrue($container->hasDefinition(CroctScriptRuntime::class));
+
+        // path is false, so the SDK loads from the CDN and the first-party proxy is not wired.
+        self::assertSame(
+            'https://example.test/plug.js',
+            $container->getDefinition(CroctScriptRuntime::class)->getArgument(2),
+        );
+        self::assertFalse($container->hasDefinition(CroctScriptProvider::class));
+        self::assertFalse($container->hasDefinition(CroctScriptListener::class));
     }
 
     #[TestDox('Applies the documented defaults for every optional option.')]
@@ -79,6 +102,26 @@ final class CroctBundleTest extends TestCase
 
         self::assertTrue($container->getParameter('croct.identity.enabled'));
         self::assertTrue($container->getParameter('croct.storyblok.enabled'));
+
+        self::assertTrue($container->hasDefinition(CroctScriptSubscriber::class));
+        self::assertTrue($container->hasDefinition(CroctScriptExtension::class));
+
+        $scriptDefinition = $container->getDefinition(CroctScriptSubscriber::class);
+
+        // First-party is the default, so the injected src is the first-party path.
+        self::assertSame('/_croct/plug.js', $scriptDefinition->getArgument(1));
+        self::assertSame('head', $scriptDefinition->getArgument(2));
+
+        self::assertTrue($container->hasDefinition(CroctScriptProvider::class));
+        self::assertTrue($container->hasDefinition(CroctScriptListener::class));
+        self::assertSame(
+            'https://cdn.croct.io/js/v1/lib/plug.js',
+            $container->getDefinition(CroctScriptProvider::class)->getArgument('$loaderUrl'),
+        );
+        self::assertSame(
+            '/_croct/plug.js',
+            $container->getDefinition(CroctScriptListener::class)->getArgument('$path'),
+        );
     }
 
     #[TestDox('Requires the application ID.')]

@@ -8,10 +8,15 @@ use Croct\Plug\Plug;
 use Croct\Plug\Symfony\DependencyInjection\Compiler\IdentityIntegrationPass;
 use Croct\Plug\Symfony\DependencyInjection\Compiler\StoryblokIntegrationPass;
 use Croct\Plug\Symfony\EventListener\CroctResponseSubscriber;
+use Croct\Plug\Symfony\EventListener\CroctScriptListener;
+use Croct\Plug\Symfony\EventListener\CroctScriptSubscriber;
+use Croct\Plug\Symfony\Twig\CroctScriptExtension;
+use Croct\Plug\Symfony\Twig\CroctScriptRuntime;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
+use Twig\Extension\RuntimeExtensionInterface as RuntimeExtension;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
 /**
@@ -62,6 +67,25 @@ final class CroctBundle extends AbstractBundle
                         ->booleanNode('enabled')->defaultTrue()->end()
                     ->end()
                 ->end()
+                ->arrayNode('script')
+                    ->info('Injects the client-side SDK bootstrap into HTML responses.')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->booleanNode('auto_inject')->defaultTrue()->end()
+                        ->enumNode('placement')
+                            ->values(['head', 'body'])
+                            ->defaultValue('head')
+                        ->end()
+                        ->scalarNode('path')
+                            ->info('First-party path that serves the SDK. Set to false to use the CDN instead.')
+                            ->defaultValue('/_croct/plug.js')
+                        ->end()
+                        ->scalarNode('loader_url')
+                            ->cannotBeEmpty()
+                            ->defaultValue('https://cdn.croct.io/js/v1/lib/plug.js')
+                        ->end()
+                    ->end()
+                ->end()
             ->end();
     }
 
@@ -75,8 +99,14 @@ final class CroctBundle extends AbstractBundle
         $identity = \is_array($config['identity']) ? $config['identity'] : [];
         $storyblok = \is_array($config['storyblok']) ? $config['storyblok'] : [];
 
+        $script = \is_array($config['script']) ? $config['script'] : [];
+
         $identityEnabled = \is_bool($identity['enabled']) ? $identity['enabled'] : true;
         $storyblokEnabled = \is_bool($storyblok['enabled']) ? $storyblok['enabled'] : true;
+        $autoInject = \is_bool($script['auto_inject']) ? $script['auto_inject'] : true;
+        // A string path serves the SDK first-party. A false or null value loads it from the CDN.
+        $path = \is_string($script['path']) ? $script['path'] : null;
+        $scriptSrc = $path ?? $script['loader_url'];
 
         $services = $container->services()->defaults()->autowire()->autoconfigure();
 
@@ -102,7 +132,37 @@ final class CroctBundle extends AbstractBundle
         // Autoconfiguration tags the subscriber as a kernel event subscriber.
         $services->set(CroctResponseSubscriber::class);
 
-        // Read by the guarded compiler passes; see build().
+        if ($autoInject) {
+            $services->set(CroctScriptSubscriber::class)
+                ->args([
+                    service(CroctFactory::class),
+                    $scriptSrc,
+                    $script['placement'],
+                ]);
+        }
+
+        // The Twig function is registered only when Twig is installed.
+        if (\interface_exists(RuntimeExtension::class)) {
+            $services->set(CroctScriptRuntime::class)
+                ->args([
+                    service(CroctFactory::class),
+                    service('request_stack'),
+                    $scriptSrc,
+                ]);
+
+            $services->set(CroctScriptExtension::class);
+        }
+
+        // First-party serving: proxy the SDK through the app's own origin instead of the CDN.
+        if ($path !== null) {
+            $services->set(CroctScriptProvider::class)
+                ->arg('$loaderUrl', $script['loader_url']);
+
+            $services->set(CroctScriptListener::class)
+                ->arg('$path', $path);
+        }
+
+        // Read by the guarded compiler passes. See build().
         $builder->setParameter('croct.identity.enabled', $identityEnabled);
         $builder->setParameter('croct.storyblok.enabled', $storyblokEnabled);
     }

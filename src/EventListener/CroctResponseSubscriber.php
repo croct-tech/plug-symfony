@@ -6,7 +6,7 @@ namespace Croct\Plug\Symfony\EventListener;
 
 use Croct\Plug\Cookie;
 use Croct\Plug\Symfony\CroctFactory;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface as EventSubscriber;
 use Symfony\Component\HttpFoundation\Cookie as SymfonyCookie;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -14,7 +14,7 @@ use Symfony\Component\HttpKernel\KernelEvents;
 /**
  * Writes the session cookies and headers to the response.
  */
-final class CroctResponseSubscriber implements EventSubscriberInterface
+final class CroctResponseSubscriber implements EventSubscriber
 {
     public const PERSONALIZED_ATTRIBUTE = '_croct_personalized';
 
@@ -41,7 +41,7 @@ final class CroctResponseSubscriber implements EventSubscriberInterface
 
         $response = $event->getResponse();
 
-        // Cookies belong on the main response only; fragments must not set them.
+        // Cookies belong on the main response only. Fragments must not set them.
         if ($event->isMainRequest()) {
             foreach ($this->factory->getResponseCookies() as $cookie) {
                 $response->headers->setCookie(self::createCookie($cookie));
@@ -61,7 +61,8 @@ final class CroctResponseSubscriber implements EventSubscriberInterface
             $cookie->getPath(),
             $cookie->getDomain(),
             $cookie->isSecure(),
-            $cookie->isHttpOnly(),
+            // The client SDK reads these cookies, so they must never be HTTP-only.
+            false,
             false,
             [
                 'lax' => SymfonyCookie::SAMESITE_LAX,

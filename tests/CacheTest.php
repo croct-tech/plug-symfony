@@ -7,13 +7,10 @@ namespace Croct\Plug\Symfony\Tests;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\TestDox;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 
-/**
- * End-to-end check that personalized responses are never shared-cached, while plain pages keep
- * their public caching.
- */
 #[CoversNothing]
 #[TestDox('The bundle cache behavior')]
 final class CacheTest extends WebTestCase
@@ -31,11 +28,10 @@ final class CacheTest extends WebTestCase
         self::assertTrue($response->headers->hasCacheControlDirective('private'));
         self::assertFalse($response->headers->hasCacheControlDirective('public'));
 
-        $cookies = [];
-
-        foreach ($response->headers->getCookies() as $cookie) {
-            $cookies[] = $cookie->getName();
-        }
+        $cookies = \array_map(
+            static fn (Cookie $cookie): string => $cookie->getName(),
+            $response->headers->getCookies(),
+        );
 
         self::assertContains('ct.client_id', $cookies);
         self::assertContains('ct.user_token', $cookies);
@@ -54,9 +50,12 @@ final class CacheTest extends WebTestCase
 
         self::assertTrue($response->headers->hasCacheControlDirective('private'));
 
-        foreach ($response->headers->getCookies() as $cookie) {
-            self::assertStringStartsNotWith('ct.', $cookie->getName());
-        }
+        $croctCookies = \array_filter(
+            $response->headers->getCookies(),
+            static fn (Cookie $cookie): bool => \str_starts_with($cookie->getName(), 'ct.'),
+        );
+
+        self::assertSame([], $croctCookies);
     }
 
     #[TestDox('Leaves a non-personalized response publicly cacheable without session cookies.')]
@@ -71,8 +70,11 @@ final class CacheTest extends WebTestCase
         self::assertFalse($response->headers->hasCacheControlDirective('private'));
         self::assertSame('3600', $response->headers->getCacheControlDirective('max-age'));
 
-        foreach ($response->headers->getCookies() as $cookie) {
-            self::assertStringStartsNotWith('ct.', $cookie->getName());
-        }
+        $croctCookies = \array_filter(
+            $response->headers->getCookies(),
+            static fn (Cookie $cookie): bool => \str_starts_with($cookie->getName(), 'ct.'),
+        );
+
+        self::assertSame([], $croctCookies);
     }
 }

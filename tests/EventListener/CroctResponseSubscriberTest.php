@@ -71,6 +71,14 @@ final class CroctResponseSubscriberTest extends TestCase
 
         self::assertContains('ct.client_id', $names);
         self::assertContains('ct.user_token', $names);
+
+        $httpOnly = \array_map(
+            static fn (Cookie $cookie): bool => $cookie->isHttpOnly(),
+            $response->headers->getCookies(),
+        );
+
+        // The client SDK reads these cookies, so they must never be HTTP-only.
+        self::assertNotContains(true, $httpOnly);
     }
 
     #[TestDox('Marks a flagged sub-request response private without writing cookies.')]

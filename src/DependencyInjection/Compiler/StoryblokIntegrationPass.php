@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Croct\Plug\Symfony\DependencyInjection\Compiler;
 
 use Croct\Plug\Plug;
-use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
+use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface as CompilerPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
@@ -13,7 +13,7 @@ use Symfony\Component\DependencyInjection\Reference;
 /**
  * Wires the Croct/Storyblok decorator when both the decorator and the Storyblok service are present.
  */
-final class StoryblokIntegrationPass implements CompilerPassInterface
+final class StoryblokIntegrationPass implements CompilerPass
 {
     private const STORIES_API_INTERFACE = 'Storyblok\\Api\\StoriesApiInterface';
 
@@ -25,7 +25,7 @@ final class StoryblokIntegrationPass implements CompilerPassInterface
             return;
         }
 
-        // The decorator ships in croct/plug-storyblok; the service comes from storyblok/symfony-bundle.
+        // The decorator ships in croct/plug-storyblok, and the service comes from storyblok/symfony-bundle.
         if (!\class_exists(self::CROCT_STORIES_API) || !$container->has(self::STORIES_API_INTERFACE)) {
             return;
         }

@@ -7,7 +7,7 @@ namespace Croct\Plug\Symfony\DependencyInjection\Compiler;
 use Croct\Plug\Symfony\CroctFactory;
 use Croct\Plug\Symfony\EventListener\CroctIdentityListener;
 use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
+use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface as CompilerPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
@@ -16,7 +16,7 @@ use Symfony\Component\HttpKernel\KernelEvents;
 /**
  * Wires the user-identity listener only when Symfony Security is installed and identity is enabled.
  */
-final class IdentityIntegrationPass implements CompilerPassInterface
+final class IdentityIntegrationPass implements CompilerPass
 {
     public function process(ContainerBuilder $container): void
     {

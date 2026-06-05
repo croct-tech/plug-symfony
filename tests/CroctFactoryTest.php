@@ -76,6 +76,23 @@ final class CroctFactoryTest extends TestCase
         self::assertSame('user-1', $factory->getStoredUserToken()?->getSubject());
     }
 
+    #[TestDox('Exposes the visitor-independent browser plug options.')]
+    public function testExposesPlugOptions(): void
+    {
+        $factory = new CroctFactory(
+            new RequestStack(),
+            self::APP_ID,
+            self::API_KEY,
+            cookieDomain: 'example.com',
+        );
+
+        $options = $factory->getPlugOptions();
+
+        self::assertSame(self::APP_ID, $options['appId']);
+        self::assertTrue($options['disableCidMirroring']);
+        self::assertArrayHasKey('cookie', $options);
+    }
+
     #[TestDox('Flags the current request as personalized when the visitor session is used.')]
     public function testFlagsRequestWhenSessionIsUsed(): void
     {

@@ -14,12 +14,12 @@ use Croct\Plug\Symfony\EventListener\CroctResponseSubscriber;
 use Croct\Plug\Token;
 use Croct\Plug\VaryingResponseObserver;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Contracts\Service\ResetInterface;
+use Symfony\Contracts\Service\ResetInterface as ResettableService;
 
 /**
  * Builds a request-scoped {@see Plug} from the current Symfony request.
  */
-final class CroctFactory implements ResetInterface
+final class CroctFactory implements ResettableService
 {
     private RequestStack $requestStack;
 
@@ -86,6 +86,23 @@ final class CroctFactory implements ResetInterface
         return $this->getStorage()->getUserToken();
     }
 
+    /**
+     * Returns the visitor-independent options for bootstrapping the client-side SDK.
+     *
+     * Built without resolving the Plug so it stays cache-neutral and works before the credentials
+     * are validated. The visitor identity is read client-side from the cookies.
+     *
+     * @return array<string, mixed>
+     */
+    public function getPlugOptions(): array
+    {
+        return [
+            'appId' => $this->appId,
+            'disableCidMirroring' => true,
+            'cookie' => $this->createCookieConfiguration()->toBrowserCookies(),
+        ];
+    }
+
     public function reset(): void
     {
         $this->plug = null;
@@ -101,13 +118,16 @@ final class CroctFactory implements ResetInterface
     {
         $request = $this->requestStack->getCurrentRequest();
 
-        $configuration = new CookieConfiguration(
+        return CookieStorage::fromArray($request?->cookies->all() ?? [], $this->createCookieConfiguration());
+    }
+
+    private function createCookieConfiguration(): CookieConfiguration
+    {
+        return new CookieConfiguration(
             domain: $this->cookieDomain,
             secure: $this->cookieSecure,
             sameSite: \ucfirst($this->cookieSameSite),
         );
-
-        return CookieStorage::fromArray($request?->cookies->all() ?? [], $configuration);
     }
 
     private function createPlug(): Plug
@@ -140,7 +160,7 @@ final class CroctFactory implements ResetInterface
     }
 
     /**
-     * Resolves the locale to send: the configured value overrides detection; with detection off,
+     * Resolves the locale to send. The configured value overrides detection. With detection off,
      * only the configured value (if any) is used.
      */
     private function resolveLocale(?string $detected): ?string

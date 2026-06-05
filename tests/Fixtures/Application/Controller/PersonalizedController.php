@@ -21,8 +21,8 @@ final class PersonalizedController
 
     public function __invoke(): Response
     {
-        // Using the session flags the request as varying (no network needed for the handoff).
-        $this->croct->getPlugOptions();
+        // Reading the client ID touches the visitor session and flags the request as varying.
+        $this->croct->getClientId();
 
         $response = new Response('personalized');
         $response->setPublic();

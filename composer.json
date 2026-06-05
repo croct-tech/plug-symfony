@@ -1,92 +1,95 @@
 {
-  "name": "croct/plug-symfony",
-  "description": "Symfony bundle to plug your Symfony applications into Croct.",
-  "license": "MIT",
-  "type": "symfony-bundle",
-  "keywords": [
-    "croct",
-    "personalization",
-    "symfony",
-    "bundle",
-    "php"
-  ],
-  "authors": [
-    {
-      "name": "Croct",
-      "email": "lib+plug-symfony@croct.com",
-      "homepage": "https://croct.com"
+    "name": "croct/plug-symfony",
+    "description": "Symfony bundle to plug your Symfony applications into Croct.",
+    "license": "MIT",
+    "type": "symfony-bundle",
+    "keywords": [
+        "croct",
+        "personalization",
+        "symfony",
+        "bundle",
+        "php"
+    ],
+    "authors": [
+        {
+            "name": "Croct",
+            "email": "lib+plug-symfony@croct.com",
+            "homepage": "https://croct.com"
+        }
+    ],
+    "homepage": "https://github.com/croct-tech/plug-symfony",
+    "support": {
+        "issues": "https://github.com/croct-tech/plug-symfony/issues",
+        "source": "https://github.com/croct-tech/plug-symfony"
+    },
+    "require": {
+        "php": "^8.2",
+        "ext-json": "*",
+        "croct/plug-php": "dev-initial-version as 1.0.0",
+        "symfony/config": "^7.4",
+        "symfony/dependency-injection": "^7.4",
+        "symfony/event-dispatcher": "^7.4",
+        "symfony/framework-bundle": "^7.4",
+        "symfony/http-foundation": "^7.4",
+        "symfony/http-kernel": "^7.4",
+        "symfony/service-contracts": "^3.6",
+        "psr/cache": "^3.0",
+        "symfony/http-client": "^7.4"
+    },
+    "require-dev": {
+        "croct/coding-standard": "^0.4.5",
+        "ergebnis/composer-normalize": "^2.28",
+        "nyholm/psr7": "^1.8",
+        "phpstan/extension-installer": "^1.4",
+        "phpstan/phpstan": "^2.2",
+        "phpstan/phpstan-deprecation-rules": "^2.0",
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^11.5",
+        "squizlabs/php_codesniffer": "^4.0",
+        "symfony/browser-kit": "^7.4",
+        "symfony/security-bundle": "^7.4",
+        "twig/twig": "^3.0",
+        "symfony/cache": "^7.4"
+    },
+    "suggest": {
+        "croct/plug-storyblok": "Serves Croct content inside Storyblok stories; auto-wired alongside the Storyblok bundle.",
+        "symfony/security-bundle": "Enables built-in user identification from the authenticated user.",
+        "twig/twig": "Enables the {{ croct_script() }} Twig function for placing the client bootstrap manually."
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/croct-tech/plug-php"
+        }
+    ],
+    "prefer-stable": true,
+    "autoload": {
+        "psr-4": {
+            "Croct\\Plug\\Symfony\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Croct\\Plug\\Symfony\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "ergebnis/composer-normalize": true,
+            "php-http/discovery": true,
+            "phpstan/extension-installer": true
+        }
+    },
+    "scripts": {
+        "test": [
+            "composer validate",
+            "composer normalize --dry-run",
+            "mkdir -p .cache",
+            "phpcs",
+            "phpstan analyse --memory-limit=512M",
+            "phpunit"
+        ]
     }
-  ],
-  "homepage": "https://github.com/croct-tech/plug-symfony",
-  "support": {
-    "issues": "https://github.com/croct-tech/plug-symfony/issues",
-    "source": "https://github.com/croct-tech/plug-symfony"
-  },
-  "require": {
-    "php": "^8.2",
-    "ext-json": "*",
-    "croct/plug-php": "dev-initial-version as 1.0.0",
-    "symfony/config": "^7.4",
-    "symfony/dependency-injection": "^7.4",
-    "symfony/event-dispatcher": "^7.4",
-    "symfony/framework-bundle": "^7.4",
-    "symfony/http-foundation": "^7.4",
-    "symfony/http-kernel": "^7.4",
-    "symfony/service-contracts": "^3.6"
-  },
-  "require-dev": {
-    "croct/coding-standard": "^0.4.5",
-    "ergebnis/composer-normalize": "^2.28",
-    "nyholm/psr7": "^1.8",
-    "phpstan/extension-installer": "^1.4",
-    "phpstan/phpstan": "^2.2",
-    "phpstan/phpstan-deprecation-rules": "^2.0",
-    "phpstan/phpstan-phpunit": "^2.0",
-    "phpstan/phpstan-strict-rules": "^2.0",
-    "phpunit/phpunit": "^11.5",
-    "squizlabs/php_codesniffer": "^4.0",
-    "symfony/browser-kit": "^7.4",
-    "symfony/http-client": "^7.4",
-    "symfony/security-bundle": "^7.4"
-  },
-  "suggest": {
-    "croct/plug-storyblok": "Serves Croct content inside Storyblok stories; auto-wired alongside the Storyblok bundle.",
-    "symfony/http-client": "A PSR-18 HTTP client used to talk to the Croct API; any PSR-18 client works.",
-    "symfony/security-bundle": "Enables built-in user identification from the authenticated user."
-  },
-  "repositories": [
-    {
-      "type": "vcs",
-      "url": "https://github.com/croct-tech/plug-php"
-    }
-  ],
-  "prefer-stable": true,
-  "autoload": {
-    "psr-4": {
-      "Croct\\Plug\\Symfony\\": "src/"
-    }
-  },
-  "autoload-dev": {
-    "psr-4": {
-      "Croct\\Plug\\Symfony\\Tests\\": "tests/"
-    }
-  },
-  "config": {
-    "allow-plugins": {
-      "dealerdirect/phpcodesniffer-composer-installer": true,
-      "ergebnis/composer-normalize": true,
-      "php-http/discovery": true,
-      "phpstan/extension-installer": true
-    }
-  },
-  "scripts": {
-    "test": [
-      "composer validate",
-      "composer normalize --dry-run",
-      "mkdir -p .cache",
-      "phpcs",
-      "phpstan analyse --memory-limit=512M",
-      "phpunit"
-    ]
-  }
 }

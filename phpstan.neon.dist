@@ -10,7 +10,10 @@ parameters:
         uncheckedExceptionClasses:
             - LogicException
             - ArithmeticError
+            - JsonException
+            - Psr\Cache\InvalidArgumentException
             - Symfony\Component\HttpFoundation\Exception\BadRequestException
+            - Symfony\Contracts\HttpClient\Exception\ExceptionInterface
         check:
             missingCheckedExceptionInThrows: true
             tooWideThrowType: true
