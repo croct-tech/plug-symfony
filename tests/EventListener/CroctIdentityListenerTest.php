@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace Croct\Plug\Symfony\Tests\EventListener;
 
+use Croct\Plug\IdentityResolver;
 use Croct\Plug\Symfony\CroctFactory;
 use Croct\Plug\Symfony\EventListener\CroctIdentityListener;
 use Croct\Plug\Token;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\TestCase;
-use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
-use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\HttpKernel\KernelEvents;
 
 #[CoversClass(CroctIdentityListener::class)]
 #[TestDox('The identity listener')]
@@ -25,13 +25,22 @@ final class CroctIdentityListenerTest extends TestCase
 
     private const API_KEY = '11111111-2222-4333-8444-555555555555';
 
+    #[TestDox('Subscribes to the kernel request event after authentication.')]
+    public function testSubscribesToRequestEvent(): void
+    {
+        self::assertSame(
+            [KernelEvents::REQUEST => ['onKernelRequest', 6]],
+            CroctIdentityListener::getSubscribedEvents(),
+        );
+    }
+
     #[TestDox('Does nothing on sub-requests.')]
     public function testIgnoresSubRequests(): void
     {
-        $security = $this->createMock(Security::class);
-        $security->expects(self::never())->method('getUser');
+        $identity = $this->createMock(IdentityResolver::class);
+        $identity->expects(self::never())->method('getUserId');
 
-        $listener = new CroctIdentityListener($this->createFactory(), $security);
+        $listener = new CroctIdentityListener($this->createFactory(), $identity);
         $listener->onKernelRequest($this->createRequestEvent(main: false));
     }
 
@@ -40,7 +49,7 @@ final class CroctIdentityListenerTest extends TestCase
     {
         $factory = $this->createFactory();
 
-        $listener = new CroctIdentityListener($factory, $this->createSecurity(null));
+        $listener = new CroctIdentityListener($factory, $this->createIdentity(null));
         $listener->onKernelRequest($this->createRequestEvent());
 
         self::assertNull($factory->getStoredUserToken());
@@ -51,7 +60,7 @@ final class CroctIdentityListenerTest extends TestCase
     {
         $factory = $this->createFactory();
 
-        $listener = new CroctIdentityListener($factory, $this->createSecurity('alice'));
+        $listener = new CroctIdentityListener($factory, $this->createIdentity('alice'));
         $listener->onKernelRequest($this->createRequestEvent());
 
         self::assertTrue($factory->getStoredUserToken()?->isSubject('alice'));
@@ -62,7 +71,7 @@ final class CroctIdentityListenerTest extends TestCase
     {
         $factory = $this->createFactory(self::issueToken('alice'));
 
-        $listener = new CroctIdentityListener($factory, $this->createSecurity(null));
+        $listener = new CroctIdentityListener($factory, $this->createIdentity(null));
         $listener->onKernelRequest($this->createRequestEvent());
 
         self::assertTrue($factory->getStoredUserToken()?->isAnonymous());
@@ -74,27 +83,18 @@ final class CroctIdentityListenerTest extends TestCase
         $token = self::issueToken('alice');
         $factory = $this->createFactory($token);
 
-        $listener = new CroctIdentityListener($factory, $this->createSecurity('alice'));
+        $listener = new CroctIdentityListener($factory, $this->createIdentity('alice'));
         $listener->onKernelRequest($this->createRequestEvent());
 
         self::assertSame($token, $factory->getStoredUserToken()?->toString());
     }
 
-    private function createSecurity(?string $userId): Security
+    private function createIdentity(?string $userId): IdentityResolver
     {
-        $security = $this->createMock(Security::class);
+        $identity = $this->createMock(IdentityResolver::class);
+        $identity->method('getUserId')->willReturn($userId);
 
-        if ($userId === null) {
-            $security->method('getUser')->willReturn(null);
-
-            return $security;
-        }
-
-        $user = $this->createMock(UserInterface::class);
-        $user->method('getUserIdentifier')->willReturn($userId);
-        $security->method('getUser')->willReturn($user);
-
-        return $security;
+        return $identity;
     }
 
     private function createFactory(?string $userToken = null): CroctFactory

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Croct\Plug\Symfony\Tests\EventListener;
 
+use Croct\Plug\CroctScript;
 use Croct\Plug\Symfony\CroctFactory;
-use Croct\Plug\Symfony\CroctScript;
 use Croct\Plug\Symfony\EventListener\CroctScriptSubscriber;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestDox;

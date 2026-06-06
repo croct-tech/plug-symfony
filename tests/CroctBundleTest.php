@@ -11,6 +11,7 @@ use Croct\Plug\Symfony\CroctScriptProvider;
 use Croct\Plug\Symfony\EventListener\CroctResponseSubscriber;
 use Croct\Plug\Symfony\EventListener\CroctScriptListener;
 use Croct\Plug\Symfony\EventListener\CroctScriptSubscriber;
+use Croct\Plug\Symfony\PrivateResponseMarker;
 use Croct\Plug\Symfony\Twig\CroctScriptExtension;
 use Croct\Plug\Symfony\Twig\CroctScriptRuntime;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -69,6 +70,7 @@ final class CroctBundleTest extends TestCase
 
         self::assertTrue($container->hasDefinition(Plug::class));
         self::assertTrue($container->hasDefinition(CroctResponseSubscriber::class));
+        self::assertTrue($container->hasDefinition(PrivateResponseMarker::class));
 
         // auto_inject is off, so the injector is not registered. The Twig function still is.
         self::assertFalse($container->hasDefinition(CroctScriptSubscriber::class));

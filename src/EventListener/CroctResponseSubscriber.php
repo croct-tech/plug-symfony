@@ -6,6 +6,7 @@ namespace Croct\Plug\Symfony\EventListener;
 
 use Croct\Plug\Cookie;
 use Croct\Plug\Symfony\CroctFactory;
+use Croct\Plug\Symfony\PersonalizationMarker;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface as EventSubscriber;
 use Symfony\Component\HttpFoundation\Cookie as SymfonyCookie;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
@@ -20,9 +21,12 @@ final class CroctResponseSubscriber implements EventSubscriber
 
     private CroctFactory $factory;
 
-    public function __construct(CroctFactory $factory)
+    private PersonalizationMarker $marker;
+
+    public function __construct(CroctFactory $factory, PersonalizationMarker $marker)
     {
         $this->factory = $factory;
+        $this->marker = $marker;
     }
 
     /**
@@ -49,7 +53,7 @@ final class CroctResponseSubscriber implements EventSubscriber
         }
 
         // The response depends on the visitor (content and/or session cookies): never shared-cache it.
-        $response->setPrivate();
+        $this->marker->mark($response);
     }
 
     private static function createCookie(Cookie $cookie): SymfonyCookie

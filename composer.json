@@ -26,15 +26,14 @@
         "php": "^8.2",
         "ext-json": "*",
         "croct/plug-php": "dev-initial-version as 1.0.0",
+        "psr/cache": "^3.0",
         "symfony/config": "^7.4",
         "symfony/dependency-injection": "^7.4",
         "symfony/event-dispatcher": "^7.4",
-        "symfony/framework-bundle": "^7.4",
+        "symfony/http-client": "^7.4",
         "symfony/http-foundation": "^7.4",
         "symfony/http-kernel": "^7.4",
-        "symfony/service-contracts": "^3.6",
-        "psr/cache": "^3.0",
-        "symfony/http-client": "^7.4"
+        "symfony/service-contracts": "^3.6"
     },
     "require-dev": {
         "croct/coding-standard": "^0.4.5",
@@ -48,9 +47,10 @@
         "phpunit/phpunit": "^11.5",
         "squizlabs/php_codesniffer": "^4.0",
         "symfony/browser-kit": "^7.4",
+        "symfony/cache": "^7.4",
+        "symfony/framework-bundle": "^7.4",
         "symfony/security-bundle": "^7.4",
-        "twig/twig": "^3.0",
-        "symfony/cache": "^7.4"
+        "twig/twig": "^3.0"
     },
     "suggest": {
         "croct/plug-storyblok": "Serves Croct content inside Storyblok stories; auto-wired alongside the Storyblok bundle.",

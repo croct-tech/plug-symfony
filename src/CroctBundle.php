@@ -129,8 +129,14 @@ final class CroctBundle extends AbstractBundle
         $services->set(Plug::class)
             ->factory([service(CroctFactory::class), 'getPlug']);
 
+        $services->set(PrivateResponseMarker::class);
+
         // Autoconfiguration tags the subscriber as a kernel event subscriber.
-        $services->set(CroctResponseSubscriber::class);
+        $services->set(CroctResponseSubscriber::class)
+            ->args([
+                service(CroctFactory::class),
+                service(PrivateResponseMarker::class),
+            ]);
 
         if ($autoInject) {
             $services->set(CroctScriptSubscriber::class)

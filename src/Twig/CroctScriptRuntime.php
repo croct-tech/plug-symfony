@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Croct\Plug\Symfony\Twig;
 
+use Croct\Plug\CroctScript;
 use Croct\Plug\Symfony\CroctFactory;
-use Croct\Plug\Symfony\CroctScript;
 use Croct\Plug\Symfony\EventListener\CroctScriptSubscriber;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Twig\Extension\RuntimeExtensionInterface as RuntimeExtension;

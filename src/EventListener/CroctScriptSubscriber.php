@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Croct\Plug\Symfony\EventListener;
 
+use Croct\Plug\CroctScript;
 use Croct\Plug\Symfony\CroctFactory;
-use Croct\Plug\Symfony\CroctScript;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface as EventSubscriber;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;

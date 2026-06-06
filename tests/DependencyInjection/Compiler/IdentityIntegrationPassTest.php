@@ -7,13 +7,13 @@ namespace Croct\Plug\Symfony\Tests\DependencyInjection\Compiler;
 use Croct\Plug\Symfony\CroctFactory;
 use Croct\Plug\Symfony\DependencyInjection\Compiler\IdentityIntegrationPass;
 use Croct\Plug\Symfony\EventListener\CroctIdentityListener;
+use Croct\Plug\Symfony\SecurityIdentityResolver;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
-use Symfony\Component\HttpKernel\KernelEvents;
 
 #[CoversClass(IdentityIntegrationPass::class)]
 #[TestDox('The identity integration pass')]
@@ -47,25 +47,26 @@ final class IdentityIntegrationPassTest extends TestCase
         (new IdentityIntegrationPass())->process($container);
 
         self::assertTrue($container->hasDefinition(CroctIdentityListener::class));
+        self::assertTrue($container->hasDefinition(SecurityIdentityResolver::class));
+
+        // The resolver wraps the Security service.
+        $resolver = $container->getDefinition(SecurityIdentityResolver::class);
+
+        self::assertInstanceOf(Reference::class, $resolver->getArgument(0));
+        self::assertSame(Security::class, (string) $resolver->getArgument(0));
 
         $definition = $container->getDefinition(CroctIdentityListener::class);
-        $tags = $definition->getTag('kernel.event_listener');
 
-        self::assertCount(1, $tags);
-
-        $tag = $tags[0];
-
-        self::assertIsArray($tag);
-        self::assertSame(KernelEvents::REQUEST, $tag['event']);
-        self::assertSame('onKernelRequest', $tag['method']);
-        self::assertSame(6, $tag['priority']);
+        // Registered as an event subscriber so it works in both Symfony and Drupal.
+        self::assertCount(1, $definition->getTag('kernel.event_subscriber'));
 
         $arguments = $definition->getArguments();
 
+        // The listener depends on the resolver, not on Security directly.
         self::assertInstanceOf(Reference::class, $arguments[0]);
         self::assertInstanceOf(Reference::class, $arguments[1]);
         self::assertSame(CroctFactory::class, (string) $arguments[0]);
-        self::assertSame(Security::class, (string) $arguments[1]);
+        self::assertSame(SecurityIdentityResolver::class, (string) $arguments[1]);
         self::assertFalse($definition->isAutowired());
     }
 

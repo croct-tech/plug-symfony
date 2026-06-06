@@ -8,6 +8,7 @@ use Croct\Plug\Cookie;
 use Croct\Plug\CookieConfiguration;
 use Croct\Plug\CookieStorage;
 use Croct\Plug\Croct;
+use Croct\Plug\LocaleResolver;
 use Croct\Plug\Plug;
 use Croct\Plug\RequestContext;
 use Croct\Plug\Symfony\EventListener\CroctResponseSubscriber;
@@ -39,6 +40,8 @@ final class CroctFactory implements ResettableService
 
     private string $cookieSameSite;
 
+    private LocaleResolver $localeResolver;
+
     private ?Plug $plug = null;
 
     private ?CookieStorage $storage = null;
@@ -53,6 +56,7 @@ final class CroctFactory implements ResettableService
         ?string $cookieDomain = null,
         bool $cookieSecure = true,
         string $cookieSameSite = 'none',
+        ?LocaleResolver $localeResolver = null,
     ) {
         $this->requestStack = $requestStack;
         $this->appId = $appId;
@@ -63,6 +67,7 @@ final class CroctFactory implements ResettableService
         $this->cookieDomain = $cookieDomain;
         $this->cookieSecure = $cookieSecure;
         $this->cookieSameSite = $cookieSameSite;
+        $this->localeResolver = $localeResolver ?? new RequestLocaleResolver($requestStack);
     }
 
     public function getPlug(): Plug
@@ -141,7 +146,7 @@ final class CroctFactory implements ResettableService
                 referrer: $request->headers->get('referer'),
                 clientAgent: $request->headers->get('User-Agent'),
                 clientIp: $request->getClientIp(),
-                preferredLocale: $this->resolveLocale($request->getPreferredLanguage()),
+                preferredLocale: $this->resolveLocale($this->localeResolver->getLocale()),
             );
 
         $croct = Croct::plug(

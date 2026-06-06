@@ -6,6 +6,7 @@ namespace Croct\Plug\Symfony\Tests\EventListener;
 
 use Croct\Plug\Symfony\CroctFactory;
 use Croct\Plug\Symfony\EventListener\CroctResponseSubscriber;
+use Croct\Plug\Symfony\PrivateResponseMarker;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\TestCase;
@@ -96,7 +97,10 @@ final class CroctResponseSubscriberTest extends TestCase
 
     private function createSubscriber(): CroctResponseSubscriber
     {
-        return new CroctResponseSubscriber(new CroctFactory(new RequestStack(), self::APP_ID, self::API_KEY));
+        return new CroctResponseSubscriber(
+            new CroctFactory(new RequestStack(), self::APP_ID, self::API_KEY),
+            new PrivateResponseMarker(),
+        );
     }
 
     private function createEvent(Response $response, bool $flagged, bool $main = true): ResponseEvent
