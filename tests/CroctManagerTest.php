@@ -6,6 +6,7 @@ namespace Croct\Plug\Symfony\Tests;
 
 use Croct\Plug\Content\NullContentProvider;
 use Croct\Plug\Cookie;
+use Croct\Plug\Exception\MalformedTokenException;
 use Croct\Plug\IdentityResolver;
 use Croct\Plug\Symfony\CroctManager;
 use Croct\Plug\Symfony\EventListener\CroctResponseSubscriber;
@@ -88,7 +89,7 @@ final class CroctManagerTest extends TestCase
     }
 
     /**
-     * @throws \Croct\Plug\Exception\MalformedTokenException
+     * @throws MalformedTokenException
      */
     #[TestDox('Identifies the visitor when the authenticated user diverges from the token.')]
     public function testReconcilesIdentityOnLogin(): void
@@ -106,7 +107,7 @@ final class CroctManagerTest extends TestCase
     }
 
     /**
-     * @throws \Croct\Plug\Exception\MalformedTokenException
+     * @throws MalformedTokenException
      */
     #[TestDox('Anonymizes the visitor after the user logs out.')]
     public function testReconcilesIdentityOnLogout(): void
