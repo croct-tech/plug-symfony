@@ -11,6 +11,7 @@ use Nyholm\Psr7\Factory\Psr17Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Client\ClientExceptionInterface as ClientException;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\Psr16Cache;
 use Symfony\Component\HttpFoundation\Request;
@@ -103,6 +104,9 @@ final class CroctScriptListenerTest extends TestCase
         self::assertFalse($this->dispatch(Request::create(self::PATH), main: false)->hasResponse());
     }
 
+    /**
+     * @throws ClientException If the upstream request fails.
+     */
     private function dispatch(Request $request, bool $main = true): RequestEvent
     {
         $provider = new CroctScriptProvider(

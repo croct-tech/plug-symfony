@@ -60,8 +60,8 @@
     },
     "repositories": [
         {
-            "type": "path",
-            "url": "../plug-php"
+            "type": "vcs",
+            "url": "https://github.com/croct-tech/plug-php"
         }
     ],
     "prefer-stable": true,

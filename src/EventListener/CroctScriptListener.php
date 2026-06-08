@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Croct\Plug\Symfony\EventListener;
 
 use Croct\Plug\CroctScriptProvider;
+use Psr\Http\Client\ClientExceptionInterface as ClientException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface as EventSubscriber;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -38,6 +39,9 @@ final class CroctScriptListener implements EventSubscriber
         return [KernelEvents::REQUEST => ['onRequest', 33]];
     }
 
+    /**
+     * @throws ClientException If the upstream request fails.
+     */
     public function onRequest(RequestEvent $event): void
     {
         $request = $event->getRequest();

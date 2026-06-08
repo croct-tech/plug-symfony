@@ -4,15 +4,21 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8b444471669849d1771d20fd6c0b5c71",
+    "content-hash": "330594a729f3d4f4d519135e8d137434",
     "packages": [
         {
             "name": "croct/plug-php",
             "version": "dev-initial-version",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/croct-tech/plug-php.git",
+                "reference": "e22f328bae375f083040752c7953c46473702f3e"
+            },
             "dist": {
-                "type": "path",
-                "url": "../plug-php",
-                "reference": "db1a74c8bfb05fcb12f8d87182d8a6b0ee560dab"
+                "type": "zip",
+                "url": "https://api.github.com/repos/croct-tech/plug-php/zipball/e22f328bae375f083040752c7953c46473702f3e",
+                "reference": "e22f328bae375f083040752c7953c46473702f3e",
+                "shasum": ""
             },
             "require": {
                 "composer-runtime-api": "^2.0",
@@ -89,9 +95,7 @@
                 "issues": "https://github.com/croct-tech/plug-php/issues",
                 "source": "https://github.com/croct-tech/plug-php"
             },
-            "transport-options": {
-                "relative": true
-            }
+            "time": "2026-06-08T19:32:06+00:00"
         },
         {
             "name": "nyholm/psr7",
