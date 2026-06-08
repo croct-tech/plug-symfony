@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace Croct\Plug\Symfony\DependencyInjection\Compiler;
 
-use Croct\Plug\Symfony\CroctFactory;
-use Croct\Plug\Symfony\EventListener\CroctIdentityListener;
+use Croct\Plug\Symfony\CroctManager;
 use Croct\Plug\Symfony\SecurityIdentityResolver;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface as CompilerPass;
@@ -14,9 +13,11 @@ use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
 
 /**
- * Wires the user-identity listener only when Symfony Security is installed and identity is enabled.
+ * Reconciles the visitor identity with the authenticated user.
  *
- * It binds the listener to the Security-backed {@see SecurityIdentityResolver}.
+ * Active only when Symfony Security is installed and identity is enabled. It injects the
+ * Security-backed identity resolver into the manager, which keeps the visitor token in sync with
+ * the logged-in user as the session is resolved, the same way plug-next and plug-nuxt do.
  */
 final class IdentityIntegrationPass implements CompilerPass
 {
@@ -36,18 +37,7 @@ final class IdentityIntegrationPass implements CompilerPass
         $resolver->setAutoconfigured(false);
         $container->setDefinition(SecurityIdentityResolver::class, $resolver);
 
-        $listener = new Definition(CroctIdentityListener::class);
-
-        $listener->setArguments([
-            new Reference(CroctFactory::class),
-            new Reference(SecurityIdentityResolver::class),
-        ]);
-
-        // The listener is an event subscriber, so its event and priority come from getSubscribedEvents.
-        $listener->addTag('kernel.event_subscriber');
-
-        $listener->setAutowired(false);
-        $listener->setAutoconfigured(false);
-        $container->setDefinition(CroctIdentityListener::class, $listener);
+        $container->getDefinition(CroctManager::class)
+            ->setArgument('$identity', new Reference(SecurityIdentityResolver::class));
     }
 }

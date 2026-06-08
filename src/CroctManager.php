@@ -4,23 +4,29 @@ declare(strict_types=1);
 
 namespace Croct\Plug\Symfony;
 
+use Croct\Plug\Content\ContentProvider;
 use Croct\Plug\Cookie;
 use Croct\Plug\CookieConfiguration;
 use Croct\Plug\CookieStorage;
 use Croct\Plug\Croct;
+use Croct\Plug\IdentityResolver;
 use Croct\Plug\LocaleResolver;
 use Croct\Plug\Plug;
 use Croct\Plug\RequestContext;
 use Croct\Plug\Symfony\EventListener\CroctResponseSubscriber;
-use Croct\Plug\Token;
 use Croct\Plug\VaryingResponseObserver;
+use Psr\Log\LoggerInterface as Logger;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Service\ResetInterface as ResettableService;
 
 /**
- * Builds a request-scoped {@see Plug} from the current Symfony request.
+ * Builds and manages the request-scoped plug for the current Symfony request.
+ *
+ * Besides creating the plug, it reconciles the visitor identity with the authenticated user and
+ * exposes the session cookies and the client-side bootstrap options for the response.
  */
-final class CroctFactory implements ResettableService
+final class CroctManager implements ResettableService
 {
     private RequestStack $requestStack;
 
@@ -42,6 +48,14 @@ final class CroctFactory implements ResettableService
 
     private LocaleResolver $localeResolver;
 
+    private ?ContentProvider $contentProvider;
+
+    private ?Logger $logger;
+
+    private int $tokenDuration;
+
+    private ?IdentityResolver $identity;
+
     private ?Plug $plug = null;
 
     private ?CookieStorage $storage = null;
@@ -57,6 +71,10 @@ final class CroctFactory implements ResettableService
         bool $cookieSecure = true,
         string $cookieSameSite = 'none',
         ?LocaleResolver $localeResolver = null,
+        ?ContentProvider $contentProvider = null,
+        ?Logger $logger = null,
+        int $tokenDuration = Croct::DEFAULT_TOKEN_DURATION,
+        ?IdentityResolver $identity = null,
     ) {
         $this->requestStack = $requestStack;
         $this->appId = $appId;
@@ -68,6 +86,10 @@ final class CroctFactory implements ResettableService
         $this->cookieSecure = $cookieSecure;
         $this->cookieSameSite = $cookieSameSite;
         $this->localeResolver = $localeResolver ?? new RequestLocaleResolver($requestStack);
+        $this->contentProvider = $contentProvider;
+        $this->logger = $logger;
+        $this->tokenDuration = $tokenDuration;
+        $this->identity = $identity;
     }
 
     public function getPlug(): Plug
@@ -84,11 +106,35 @@ final class CroctFactory implements ResettableService
     }
 
     /**
-     * Reads the visitor token straight from storage, without flagging the request as varying.
+     * Reconciles the visitor token with the authenticated user.
+     *
+     * When the logged-in user no longer matches the cookie token, the visitor is re-identified
+     * through the session. That flags the request as varying, so the new cookie is written and
+     * the response goes private. A matching or anonymous visitor is left untouched, keeping the
+     * response shared-cacheable, the same way plug-next and plug-nuxt reconcile.
      */
-    public function getStoredUserToken(): ?Token
+    public function reconcile(): void
     {
-        return $this->getStorage()->getUserToken();
+        if ($this->identity === null) {
+            return;
+        }
+
+        $stored = $this->getStorage()->getUserToken();
+        $userId = $this->identity->getUserId();
+
+        $matches = $userId === null
+            ? ($stored?->isAnonymous() ?? true)
+            : ($stored?->isSubject($userId) ?? false);
+
+        if ($matches) {
+            return;
+        }
+
+        if ($userId === null) {
+            $this->getPlug()->anonymize();
+        } else {
+            $this->getPlug()->identify($userId);
+        }
     }
 
     /**
@@ -142,6 +188,7 @@ final class CroctFactory implements ResettableService
         $context = $request === null
             ? new RequestContext()
             : new RequestContext(
+                previewToken: RequestContext::resolvePreviewToken(self::getPreviewToken($request)),
                 url: $request->getUri(),
                 referrer: $request->headers->get('referer'),
                 clientAgent: $request->headers->get('User-Agent'),
@@ -153,8 +200,12 @@ final class CroctFactory implements ResettableService
             appId: $this->appId,
             apiKey: $this->apiKey,
             storage: $this->getStorage(),
+            identity: $this->identity,
             baseEndpointUrl: $this->baseEndpointUrl,
+            tokenDuration: $this->tokenDuration,
+            contentProvider: $this->contentProvider,
             context: $context,
+            logger: $this->logger,
         );
 
         $requestStack = $this->requestStack;
@@ -168,6 +219,13 @@ final class CroctFactory implements ResettableService
      * Resolves the locale to send. The configured value overrides detection. With detection off,
      * only the configured value (if any) is used.
      */
+    private static function getPreviewToken(Request $request): ?string
+    {
+        $value = $request->query->getString(RequestContext::PREVIEW_QUERY_PARAMETER);
+
+        return $value !== '' ? $value : null;
+    }
+
     private function resolveLocale(?string $detected): ?string
     {
         if (!$this->localeEnabled) {

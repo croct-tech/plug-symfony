@@ -26,7 +26,9 @@
         "php": "^8.2",
         "ext-json": "*",
         "croct/plug-php": "dev-initial-version as 1.0.0",
+        "nyholm/psr7": "^1.8",
         "psr/cache": "^3.0",
+        "symfony/cache": "^7.4",
         "symfony/config": "^7.4",
         "symfony/dependency-injection": "^7.4",
         "symfony/event-dispatcher": "^7.4",
@@ -38,7 +40,7 @@
     "require-dev": {
         "croct/coding-standard": "^0.4.5",
         "ergebnis/composer-normalize": "^2.28",
-        "nyholm/psr7": "^1.8",
+        "php-http/mock-client": "^1.6",
         "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan": "^2.2",
         "phpstan/phpstan-deprecation-rules": "^2.0",
@@ -47,7 +49,6 @@
         "phpunit/phpunit": "^11.5",
         "squizlabs/php_codesniffer": "^4.0",
         "symfony/browser-kit": "^7.4",
-        "symfony/cache": "^7.4",
         "symfony/framework-bundle": "^7.4",
         "symfony/security-bundle": "^7.4",
         "twig/twig": "^3.0"
@@ -59,8 +60,8 @@
     },
     "repositories": [
         {
-            "type": "vcs",
-            "url": "https://github.com/croct-tech/plug-php"
+            "type": "path",
+            "url": "../plug-php"
         }
     ],
     "prefer-stable": true,

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Croct\Plug\Symfony\EventListener;
 
 use Croct\Plug\Cookie;
-use Croct\Plug\Symfony\CroctFactory;
+use Croct\Plug\Symfony\CroctManager;
 use Croct\Plug\Symfony\PersonalizationMarker;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface as EventSubscriber;
 use Symfony\Component\HttpFoundation\Cookie as SymfonyCookie;
@@ -19,13 +19,13 @@ final class CroctResponseSubscriber implements EventSubscriber
 {
     public const PERSONALIZED_ATTRIBUTE = '_croct_personalized';
 
-    private CroctFactory $factory;
+    private CroctManager $manager;
 
     private PersonalizationMarker $marker;
 
-    public function __construct(CroctFactory $factory, PersonalizationMarker $marker)
+    public function __construct(CroctManager $manager, PersonalizationMarker $marker)
     {
-        $this->factory = $factory;
+        $this->manager = $manager;
         $this->marker = $marker;
     }
 
@@ -39,20 +39,27 @@ final class CroctResponseSubscriber implements EventSubscriber
 
     public function onResponse(ResponseEvent $event): void
     {
+        $response = $event->getResponse();
+
+        // Eagerly reconcile the visitor identity on the main request. When the logged-in user
+        // diverged from the cookie token, this re-identifies and flags the request personalized,
+        // so the cookies are written and the response goes private below, like a content fetch.
+        if ($event->isMainRequest()) {
+            $this->manager->reconcile();
+        }
+
         if ($event->getRequest()->attributes->get(self::PERSONALIZED_ATTRIBUTE) !== true) {
             return;
         }
 
-        $response = $event->getResponse();
-
-        // Cookies belong on the main response only. Fragments must not set them.
+        // Cookies belong on the main response only. A fragment stays private without them.
         if ($event->isMainRequest()) {
-            foreach ($this->factory->getResponseCookies() as $cookie) {
+            foreach ($this->manager->getResponseCookies() as $cookie) {
                 $response->headers->setCookie(self::createCookie($cookie));
             }
         }
 
-        // The response depends on the visitor (content and/or session cookies): never shared-cache it.
+        // The response depends on the visitor (content or cookies): never shared-cache it.
         $this->marker->mark($response);
     }
 

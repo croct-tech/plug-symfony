@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace Croct\Plug\Symfony\Tests\EventListener;
 
-use Croct\Plug\Symfony\CroctScriptProvider;
+use Croct\Plug\CroctScriptProvider;
 use Croct\Plug\Symfony\EventListener\CroctScriptListener;
+use Http\Mock\Client as MockClient;
+use Nyholm\Psr7\Factory\Psr17Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
-use Symfony\Component\HttpClient\MockHttpClient;
-use Symfony\Component\HttpClient\Response\MockResponse;
+use Symfony\Component\Cache\Psr16Cache;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
@@ -23,6 +24,16 @@ use Symfony\Component\HttpKernel\KernelEvents;
 final class CroctScriptListenerTest extends TestCase
 {
     private const PATH = '/_croct/plug.js';
+
+    private Psr17Factory $factory;
+
+    private MockClient $httpClient;
+
+    protected function setUp(): void
+    {
+        $this->factory = new Psr17Factory();
+        $this->httpClient = new MockClient();
+    }
 
     #[TestDox('Subscribes to the request event, ahead of the router.')]
     public function testSubscribesAheadOfRouter(): void
@@ -38,47 +49,44 @@ final class CroctScriptListenerTest extends TestCase
         );
     }
 
-    #[TestDox('Serves brotli, with Vary, when the client accepts it.')]
-    public function testServesBrotliWhenAccepted(): void
+    #[TestDox('Relays the upstream response verbatim, with a Vary header and without cookies.')]
+    public function testRelaysUpstreamResponse(): void
     {
+        $this->httpClient->addResponse(
+            $this->factory->createResponse(200)
+                ->withHeader('Content-Type', 'text/javascript')
+                ->withHeader('Content-Encoding', 'br')
+                ->withHeader('Cache-Control', 'public, max-age=600')
+                ->withHeader('Set-Cookie', 'session=1')
+                ->withBody($this->factory->createStream('// plug')),
+        );
+
         $request = Request::create(self::PATH);
         $request->headers->set('Accept-Encoding', 'br, gzip');
 
-        $response = $this->dispatch($request, 'br')->getResponse();
+        $response = $this->dispatch($request)->getResponse();
 
         self::assertInstanceOf(Response::class, $response);
         self::assertSame('// plug', $response->getContent());
-        self::assertStringContainsString('javascript', (string) $response->headers->get('Content-Type'));
+        self::assertSame('text/javascript', $response->headers->get('Content-Type'));
         self::assertSame('br', $response->headers->get('Content-Encoding'));
-        self::assertSame('Accept-Encoding', $response->headers->get('Vary'));
         self::assertTrue($response->headers->hasCacheControlDirective('public'));
-        self::assertNotNull($response->getEtag());
-    }
-
-    #[TestDox('Falls back to gzip when brotli is not accepted.')]
-    public function testServesGzipWhenBrotliUnavailable(): void
-    {
-        $request = Request::create(self::PATH);
-        $request->headers->set('Accept-Encoding', 'gzip, deflate');
-
-        self::assertSame('gzip', $this->dispatch($request, 'gzip')->getResponse()?->headers->get('Content-Encoding'));
-    }
-
-    #[TestDox('Serves the script uncompressed when no encoding is accepted.')]
-    public function testServesUncompressedWithoutAcceptEncoding(): void
-    {
-        $response = $this->dispatch(Request::create(self::PATH))->getResponse();
-
-        self::assertInstanceOf(Response::class, $response);
-        self::assertFalse($response->headers->has('Content-Encoding'));
+        self::assertSame('600', $response->headers->getCacheControlDirective('max-age'));
         self::assertSame('Accept-Encoding', $response->headers->get('Vary'));
+        self::assertFalse($response->headers->has('Set-Cookie'));
     }
 
-    #[TestDox('Returns 304 when the client already has the current script.')]
+    #[TestDox('Returns 304 when the relayed validator matches the request.')]
     public function testReturnsNotModified(): void
     {
+        $this->httpClient->addResponse(
+            $this->factory->createResponse(200)
+                ->withHeader('ETag', '"v1"')
+                ->withBody($this->factory->createStream('// plug')),
+        );
+
         $request = Request::create(self::PATH);
-        $request->headers->set('If-None-Match', '"' . \hash('xxh128', '// plug') . '"');
+        $request->headers->set('If-None-Match', '"v1"');
 
         self::assertSame(304, $this->dispatch($request)->getResponse()?->getStatusCode());
     }
@@ -95,13 +103,12 @@ final class CroctScriptListenerTest extends TestCase
         self::assertFalse($this->dispatch(Request::create(self::PATH), main: false)->hasResponse());
     }
 
-    private function dispatch(Request $request, ?string $contentEncoding = null, bool $main = true): RequestEvent
+    private function dispatch(Request $request, bool $main = true): RequestEvent
     {
-        $info = $contentEncoding === null ? [] : ['response_headers' => ['content-encoding' => $contentEncoding]];
-
         $provider = new CroctScriptProvider(
-            new MockHttpClient([new MockResponse('// plug', $info)]),
-            new ArrayAdapter(),
+            $this->httpClient,
+            $this->factory,
+            new Psr16Cache(new ArrayAdapter()),
             'https://cdn.example/plug.js',
         );
 

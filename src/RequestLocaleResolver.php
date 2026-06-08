@@ -8,7 +8,7 @@ use Croct\Plug\LocaleResolver;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
- * Detects the locale from the current request's Accept-Language header.
+ * Follows the locale Symfony resolved for the current request.
  */
 final class RequestLocaleResolver implements LocaleResolver
 {
@@ -21,6 +21,6 @@ final class RequestLocaleResolver implements LocaleResolver
 
     public function getLocale(): ?string
     {
-        return $this->requestStack->getCurrentRequest()?->getPreferredLanguage();
+        return $this->requestStack->getCurrentRequest()?->getLocale();
     }
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Croct\Plug\Symfony\Tests\EventListener;
 
-use Croct\Plug\Symfony\CroctFactory;
+use Croct\Plug\Symfony\CroctManager;
 use Croct\Plug\Symfony\EventListener\CroctResponseSubscriber;
 use Croct\Plug\Symfony\PrivateResponseMarker;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -98,7 +98,7 @@ final class CroctResponseSubscriberTest extends TestCase
     private function createSubscriber(): CroctResponseSubscriber
     {
         return new CroctResponseSubscriber(
-            new CroctFactory(new RequestStack(), self::APP_ID, self::API_KEY),
+            new CroctManager(new RequestStack(), self::APP_ID, self::API_KEY),
             new PrivateResponseMarker(),
         );
     }

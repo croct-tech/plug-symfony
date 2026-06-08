@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Croct\Plug\Symfony\Tests\EventListener;
 
 use Croct\Plug\CroctScript;
-use Croct\Plug\Symfony\CroctFactory;
+use Croct\Plug\Symfony\CroctManager;
 use Croct\Plug\Symfony\EventListener\CroctScriptSubscriber;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestDox;
@@ -160,7 +160,7 @@ final class CroctScriptSubscriberTest extends TestCase
 
     private function dispatch(Request $request, Response $response, bool $main = true, string $placement = 'body'): void
     {
-        $subscriber = new CroctScriptSubscriber($this->factory(), self::LOADER, $placement);
+        $subscriber = new CroctScriptSubscriber($this->manager(), self::LOADER, $placement);
 
         $subscriber->onResponse(
             new ResponseEvent(
@@ -174,11 +174,11 @@ final class CroctScriptSubscriberTest extends TestCase
 
     private function expectedScript(?string $nonce = null): string
     {
-        return (string) new CroctScript(self::LOADER, $this->factory()->getPlugOptions(), $nonce);
+        return (string) new CroctScript(self::LOADER, $this->manager()->getPlugOptions(), $nonce);
     }
 
-    private function factory(): CroctFactory
+    private function manager(): CroctManager
     {
-        return new CroctFactory(new RequestStack(), self::APP_ID, self::API_KEY);
+        return new CroctManager(new RequestStack(), self::APP_ID, self::API_KEY);
     }
 }

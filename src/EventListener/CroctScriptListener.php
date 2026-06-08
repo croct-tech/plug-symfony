@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Croct\Plug\Symfony\EventListener;
 
-use Croct\Plug\Symfony\CroctScriptProvider;
+use Croct\Plug\CroctScriptProvider;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface as EventSubscriber;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,13 +14,11 @@ use Symfony\Component\HttpKernel\KernelEvents;
 /**
  * Serves the client-side SDK from a first-party path instead of a third-party CDN.
  *
- * It runs before the router so the configured path needs no route, and short-circuits the request
- * with a cacheable JavaScript response that keeps the upstream content encoding.
+ * It runs before the router so the configured path needs no route, and relays the upstream response
+ * verbatim, handling conditional requests locally against the relayed validators.
  */
 final class CroctScriptListener implements EventSubscriber
 {
-    private const TTL = 3600;
-
     private CroctScriptProvider $provider;
 
     private string $path;
@@ -48,36 +46,37 @@ final class CroctScriptListener implements EventSubscriber
             return;
         }
 
-        $script = $this->provider->load(self::negotiateEncoding($request));
+        $script = $this->provider->load(self::collectHeaders($request));
 
-        $response = new Response($script->getContent(), Response::HTTP_OK, ['Content-Type' => 'text/javascript']);
-        $response->headers->set('Vary', 'Accept-Encoding');
+        $response = new Response($script->getContent(), $script->getStatusCode());
 
-        if ($script->getEncoding() !== null) {
-            $response->headers->set('Content-Encoding', $script->getEncoding());
+        foreach ($script->getHeaders() as $name => $value) {
+            $response->headers->set($name, $value);
         }
 
-        $response->setPublic();
-        $response->setMaxAge(self::TTL);
-        $response->setEtag(\hash('xxh128', $script->getContent()));
+        // The cache varies on Accept-Encoding, so downstream caches must too.
+        $response->headers->set('Vary', 'Accept-Encoding');
         $response->isNotModified($request);
 
         $event->setResponse($response);
         $event->stopPropagation();
     }
 
-    private static function negotiateEncoding(Request $request): string
+    /**
+     * @return array<string, string>
+     */
+    private static function collectHeaders(Request $request): array
     {
-        $accepted = $request->getEncodings();
+        $headers = [];
 
-        if (\in_array('br', $accepted, true)) {
-            return 'br';
+        foreach ($request->headers->keys() as $name) {
+            $value = $request->headers->get($name);
+
+            if ($value !== null) {
+                $headers[$name] = $value;
+            }
         }
 
-        if (\in_array('gzip', $accepted, true)) {
-            return 'gzip';
-        }
-
-        return '';
+        return $headers;
     }
 }

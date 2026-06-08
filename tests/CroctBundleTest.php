@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Croct\Plug\Symfony\Tests;
 
+use Croct\Plug\Croct;
+use Croct\Plug\CroctScript;
+use Croct\Plug\CroctScriptProvider;
 use Croct\Plug\Plug;
 use Croct\Plug\Symfony\CroctBundle;
-use Croct\Plug\Symfony\CroctFactory;
-use Croct\Plug\Symfony\CroctScriptProvider;
+use Croct\Plug\Symfony\CroctManager;
 use Croct\Plug\Symfony\EventListener\CroctResponseSubscriber;
 use Croct\Plug\Symfony\EventListener\CroctScriptListener;
 use Croct\Plug\Symfony\EventListener\CroctScriptSubscriber;
@@ -24,13 +26,14 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 #[TestDox('The Croct bundle configuration')]
 final class CroctBundleTest extends TestCase
 {
-    #[TestDox('Wires every configured option to the factory and the container parameters.')]
+    #[TestDox('Wires every configured option to the manager and the container parameters.')]
     public function testWiresEveryConfiguredOption(): void
     {
         $container = $this->load([
             'app_id' => 'app-123',
             'api_key' => 'key-456',
             'base_endpoint_url' => 'https://api.example.test',
+            'token_duration' => 7200,
             'locale' => [
                 'enabled' => false,
                 'default' => 'en-GB',
@@ -50,11 +53,11 @@ final class CroctBundleTest extends TestCase
                 'auto_inject' => false,
                 'placement' => 'head',
                 'path' => false,
-                'loader_url' => 'https://example.test/plug.js',
+                'script_url' => 'https://example.test/plug.js',
             ],
         ]);
 
-        $arguments = $container->getDefinition(CroctFactory::class)->getArguments();
+        $arguments = $container->getDefinition(CroctManager::class)->getArguments();
 
         self::assertSame('app-123', $arguments[1]);
         self::assertSame('key-456', $arguments[2]);
@@ -64,6 +67,7 @@ final class CroctBundleTest extends TestCase
         self::assertSame('example.com', $arguments[6]);
         self::assertFalse($arguments[7]);
         self::assertSame('lax', $arguments[8]);
+        self::assertSame(7200, $arguments['$tokenDuration']);
 
         self::assertFalse($container->getParameter('croct.identity.enabled'));
         self::assertFalse($container->getParameter('croct.storyblok.enabled'));
@@ -93,7 +97,7 @@ final class CroctBundleTest extends TestCase
             'api_key' => 'key-456',
         ]);
 
-        $arguments = $container->getDefinition(CroctFactory::class)->getArguments();
+        $arguments = $container->getDefinition(CroctManager::class)->getArguments();
 
         self::assertNull($arguments[3]);
         self::assertTrue($arguments[4]);
@@ -101,6 +105,7 @@ final class CroctBundleTest extends TestCase
         self::assertNull($arguments[6]);
         self::assertTrue($arguments[7]);
         self::assertSame('none', $arguments[8]);
+        self::assertSame(Croct::DEFAULT_TOKEN_DURATION, $arguments['$tokenDuration']);
 
         self::assertTrue($container->getParameter('croct.identity.enabled'));
         self::assertTrue($container->getParameter('croct.storyblok.enabled'));
@@ -117,8 +122,8 @@ final class CroctBundleTest extends TestCase
         self::assertTrue($container->hasDefinition(CroctScriptProvider::class));
         self::assertTrue($container->hasDefinition(CroctScriptListener::class));
         self::assertSame(
-            'https://cdn.croct.io/js/v1/lib/plug.js',
-            $container->getDefinition(CroctScriptProvider::class)->getArgument('$loaderUrl'),
+            CroctScript::DEFAULT_SCRIPT_URL,
+            $container->getDefinition(CroctScriptProvider::class)->getArgument('$scriptUrl'),
         );
         self::assertSame(
             '/_croct/plug.js',

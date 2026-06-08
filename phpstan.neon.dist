@@ -11,9 +11,9 @@ parameters:
             - LogicException
             - ArithmeticError
             - JsonException
-            - Psr\Cache\InvalidArgumentException
+            - Psr\Http\Client\ClientExceptionInterface
+            - Psr\SimpleCache\InvalidArgumentException
             - Symfony\Component\HttpFoundation\Exception\BadRequestException
-            - Symfony\Contracts\HttpClient\Exception\ExceptionInterface
         check:
             missingCheckedExceptionInThrows: true
             tooWideThrowType: true

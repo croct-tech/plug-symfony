@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Croct\Plug\Symfony\Tests\Twig;
 
-use Croct\Plug\Symfony\CroctFactory;
+use Croct\Plug\Symfony\CroctManager;
 use Croct\Plug\Symfony\EventListener\CroctScriptSubscriber;
 use Croct\Plug\Symfony\Twig\CroctScriptRuntime;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -55,7 +55,7 @@ final class CroctScriptRuntimeTest extends TestCase
     private function createRuntime(RequestStack $stack): CroctScriptRuntime
     {
         return new CroctScriptRuntime(
-            new CroctFactory($stack, self::APP_ID, self::API_KEY),
+            new CroctManager($stack, self::APP_ID, self::API_KEY),
             $stack,
             self::LOADER,
         );

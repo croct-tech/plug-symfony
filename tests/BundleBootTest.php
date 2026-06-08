@@ -6,9 +6,9 @@ namespace Croct\Plug\Symfony\Tests;
 
 use Croct\Plug\Plug;
 use Croct\Plug\Symfony\CroctBundle;
-use Croct\Plug\Symfony\CroctFactory;
-use Croct\Plug\Symfony\EventListener\CroctIdentityListener;
+use Croct\Plug\Symfony\CroctManager;
 use Croct\Plug\Symfony\EventListener\CroctResponseSubscriber;
+use Croct\Plug\Symfony\SecurityIdentityResolver;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestDox;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -32,7 +32,7 @@ final class BundleBootTest extends KernelTestCase
 
         self::assertTrue($container->has(Plug::class));
         self::assertTrue($container->has(CroctResponseSubscriber::class));
-        self::assertInstanceOf(ResetInterface::class, $container->get(CroctFactory::class));
+        self::assertInstanceOf(ResetInterface::class, $container->get(CroctManager::class));
     }
 
     #[TestDox('Records the configured locale, identity, and Storyblok settings.')]
@@ -46,13 +46,13 @@ final class BundleBootTest extends KernelTestCase
         self::assertTrue($container->getParameter('croct.storyblok.enabled'));
     }
 
-    #[TestDox('Skips the identity listener when Symfony Security is not installed.')]
-    public function testSkipsIdentityListenerWithoutSecurity(): void
+    #[TestDox('Skips the identity integration when Symfony Security is not installed.')]
+    public function testSkipsIdentityIntegrationWithoutSecurity(): void
     {
         self::bootKernel();
 
-        // The test app has no firewall, so the guarded pass must not register the listener.
-        self::assertFalse(self::getContainer()->has(CroctIdentityListener::class));
+        // The test app has no firewall, so the guarded pass must not register the resolver.
+        self::assertFalse(self::getContainer()->has(SecurityIdentityResolver::class));
     }
 
     #[TestDox('Skips the Storyblok decorator when the integration package is not installed.')]
