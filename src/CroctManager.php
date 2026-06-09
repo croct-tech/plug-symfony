@@ -215,10 +215,6 @@ final class CroctManager implements ResettableService
         });
     }
 
-    /**
-     * Resolves the locale to send. The configured value overrides detection. With detection off,
-     * only the configured value (if any) is used.
-     */
     private static function getPreviewToken(Request $request): ?string
     {
         $value = $request->query->getString(RequestContext::PREVIEW_QUERY_PARAMETER);
@@ -226,6 +222,10 @@ final class CroctManager implements ResettableService
         return $value !== '' ? $value : null;
     }
 
+    /**
+     * Resolves the locale to send. The configured value overrides detection. With detection off,
+     * only the configured value (if any) is used.
+     */
     private function resolveLocale(?string $detected): ?string
     {
         if (!$this->localeEnabled) {
