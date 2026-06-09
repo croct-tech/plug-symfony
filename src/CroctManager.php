@@ -223,8 +223,7 @@ final class CroctManager implements ResettableService
     }
 
     /**
-     * Resolves the locale to send. The configured value overrides detection. With detection off,
-     * only the configured value (if any) is used.
+     * Resolves the locale to send, preferring the configured value over the detected one.
      */
     private function resolveLocale(?string $detected): ?string
     {
