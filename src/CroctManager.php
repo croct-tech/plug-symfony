@@ -106,35 +106,16 @@ final class CroctManager implements ResettableService
     }
 
     /**
-     * Reconciles the visitor token with the authenticated user.
+     * Resolves the visitor token and reports whether it changed.
      *
-     * When the logged-in user no longer matches the cookie token, the visitor is re-identified
-     * through the session. That flags the request as varying, so the new cookie is written and
-     * the response goes private. A matching or anonymous visitor is left untouched, keeping the
-     * response shared-cacheable, the same way plug-next and plug-nuxt reconcile.
+     * Returns true when the token was (re)issued.
      */
-    public function reconcile(): void
+    public function reconcile(): bool
     {
-        if ($this->identity === null) {
-            return;
-        }
-
         $stored = $this->getStorage()->getUserToken();
-        $userId = $this->identity->getUserId();
+        $resolved = $this->getPlug()->getUserToken();
 
-        $matches = $userId === null
-            ? ($stored?->isAnonymous() ?? true)
-            : ($stored?->isSubject($userId) ?? false);
-
-        if ($matches) {
-            return;
-        }
-
-        if ($userId === null) {
-            $this->getPlug()->anonymize();
-        } else {
-            $this->getPlug()->identify($userId);
-        }
+        return $stored === null || !$stored->equals($resolved);
     }
 
     /**

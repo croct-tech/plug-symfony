@@ -41,14 +41,13 @@ final class CroctResponseSubscriber implements EventSubscriber
     {
         $response = $event->getResponse();
 
-        // Eagerly reconcile the visitor identity on the main request. When the logged-in user
-        // diverged from the cookie token, this re-identifies and flags the request personalized,
-        // so the cookies are written and the response goes private below, like a content fetch.
-        if ($event->isMainRequest()) {
-            $this->manager->reconcile();
-        }
+        // Reconcile the visitor token on the main request: it issues or refreshes the token and
+        // reports whether it changed, so the new cookie is written and the response goes private.
+        $reissued = $event->isMainRequest() && $this->manager->reconcile();
 
-        if ($event->getRequest()->attributes->get(self::PERSONALIZED_ATTRIBUTE) !== true) {
+        $personalized = $event->getRequest()->attributes->get(self::PERSONALIZED_ATTRIBUTE) === true;
+
+        if (!$personalized && !$reissued) {
             return;
         }
 

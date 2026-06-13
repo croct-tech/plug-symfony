@@ -55,7 +55,7 @@ final class IdentityIntegrationPassTest extends TestCase
         self::assertInstanceOf(Reference::class, $resolver->getArgument(0));
         self::assertSame(Security::class, (string) $resolver->getArgument(0));
 
-        // The manager reconciles the visitor token against the resolver as the session is resolved.
+        // The resolver is wired into the manager, so the session reconciles the token against it.
         $argument = $container->getDefinition(CroctManager::class)->getArgument('$identity');
 
         self::assertInstanceOf(Reference::class, $argument);

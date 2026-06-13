@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\TestDox;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 
 #[CoversNothing]
@@ -33,8 +34,8 @@ final class CacheTest extends WebTestCase
             $response->headers->getCookies(),
         );
 
-        self::assertContains('ct.client_id', $cookies);
-        self::assertContains('ct.user_token', $cookies);
+        self::assertContains('ct_client_id', $cookies);
+        self::assertContains('ct_user_token', $cookies);
     }
 
     #[TestDox('Marks a personalized ESI fragment sub-request private without writing session cookies.')]
@@ -52,17 +53,23 @@ final class CacheTest extends WebTestCase
 
         $croctCookies = \array_filter(
             $response->headers->getCookies(),
-            static fn (Cookie $cookie): bool => \str_starts_with($cookie->getName(), 'ct.'),
+            static fn (Cookie $cookie): bool => \str_starts_with($cookie->getName(), 'ct_'),
         );
 
         self::assertSame([], $croctCookies);
     }
 
-    #[TestDox('Leaves a non-personalized response publicly cacheable without session cookies.')]
+    #[TestDox('Leaves a non-personalized response publicly cacheable on a return visit.')]
     public function testPublicResponseStaysCacheable(): void
     {
         $client = self::createClient();
+
+        // The first visit issues the session token, so that response is private. A return visit
+        // carrying the token re-issues nothing and stays publicly cacheable.
         $client->request('GET', '/public');
+        $token = self::userToken($client->getResponse());
+
+        $client->request('GET', '/public', server: ['HTTP_COOKIE' => 'ct_user_token=' . $token]);
 
         $response = $client->getResponse();
 
@@ -72,9 +79,20 @@ final class CacheTest extends WebTestCase
 
         $croctCookies = \array_filter(
             $response->headers->getCookies(),
-            static fn (Cookie $cookie): bool => \str_starts_with($cookie->getName(), 'ct.'),
+            static fn (Cookie $cookie): bool => \str_starts_with($cookie->getName(), 'ct_'),
         );
 
         self::assertSame([], $croctCookies);
+    }
+
+    private static function userToken(Response $response): string
+    {
+        foreach ($response->headers->getCookies() as $cookie) {
+            if ($cookie->getName() === 'ct_user_token') {
+                return (string) $cookie->getValue();
+            }
+        }
+
+        return '';
     }
 }

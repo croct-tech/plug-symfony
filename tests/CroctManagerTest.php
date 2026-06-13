@@ -84,14 +84,14 @@ final class CroctManagerTest extends TestCase
             $manager->getResponseCookies(),
         );
 
-        self::assertContains('ct.client_id', $names);
-        self::assertContains('ct.user_token', $names);
+        self::assertContains('ct_client_id', $names);
+        self::assertContains('ct_user_token', $names);
     }
 
     /**
      * @throws MalformedTokenException
      */
-    #[TestDox('Identifies the visitor when the authenticated user diverges from the token.')]
+    #[TestDox('Issues a token for the authenticated user and reports the change.')]
     public function testReconcilesIdentityOnLogin(): void
     {
         $request = Request::create('/');
@@ -100,48 +100,45 @@ final class CroctManagerTest extends TestCase
 
         $manager = new CroctManager($stack, self::APP_ID, self::API_KEY, identity: $this->resolver('alice'));
 
-        $manager->reconcile();
-
-        self::assertTrue($request->attributes->get(CroctResponseSubscriber::PERSONALIZED_ATTRIBUTE));
+        self::assertTrue($manager->reconcile());
         self::assertSame('alice', Token::parse(self::userToken($manager))->getSubject());
     }
 
     /**
      * @throws MalformedTokenException
      */
-    #[TestDox('Anonymizes the visitor after the user logs out.')]
+    #[TestDox('Re-issues anonymously after the user logs out and reports the change.')]
     public function testReconcilesIdentityOnLogout(): void
     {
         $token = Token::issue(appId: self::APP_ID, subject: 'alice', now: 1000)->toString();
-        $request = Request::create('/', cookies: ['ct.user_token' => $token]);
+        $request = Request::create('/', cookies: ['ct_user_token' => $token]);
         $stack = new RequestStack();
         $stack->push($request);
 
         $manager = new CroctManager($stack, self::APP_ID, self::API_KEY, identity: $this->resolver(null));
 
-        $manager->reconcile();
-
-        self::assertTrue($request->attributes->get(CroctResponseSubscriber::PERSONALIZED_ATTRIBUTE));
+        self::assertTrue($manager->reconcile());
         self::assertTrue(Token::parse(self::userToken($manager))->isAnonymous());
     }
 
-    #[TestDox('Leaves a matching visitor untouched, keeping the response cacheable.')]
-    public function testSkipsReconcileWhenMatching(): void
+    #[TestDox('Keeps a matching token and reports no change.')]
+    public function testKeepsMatchingToken(): void
     {
         $token = Token::issue(appId: self::APP_ID, subject: 'alice', now: 1000)->toString();
-        $request = Request::create('/', cookies: ['ct.user_token' => $token]);
+        $request = Request::create('/', cookies: ['ct_user_token' => $token]);
         $stack = new RequestStack();
         $stack->push($request);
 
         $manager = new CroctManager($stack, self::APP_ID, self::API_KEY, identity: $this->resolver('alice'));
 
-        $manager->reconcile();
-
-        self::assertNull($request->attributes->get(CroctResponseSubscriber::PERSONALIZED_ATTRIBUTE));
+        self::assertFalse($manager->reconcile());
     }
 
-    #[TestDox('Leaves the session untouched when no identity resolver is configured.')]
-    public function testSkipsReconcileWithoutIdentity(): void
+    /**
+     * @throws MalformedTokenException
+     */
+    #[TestDox('Issues an anonymous token when none exists, even without an identity resolver.')]
+    public function testIssuesTokenWithoutIdentity(): void
     {
         $request = Request::create('/');
         $stack = new RequestStack();
@@ -149,9 +146,34 @@ final class CroctManagerTest extends TestCase
 
         $manager = new CroctManager($stack, self::APP_ID, self::API_KEY);
 
-        $manager->reconcile();
+        self::assertTrue($manager->reconcile());
+        self::assertTrue(Token::parse(self::userToken($manager))->isAnonymous());
+    }
 
-        self::assertNull($request->attributes->get(CroctResponseSubscriber::PERSONALIZED_ATTRIBUTE));
+    #[TestDox('Keeps a valid anonymous token without an identity resolver.')]
+    public function testKeepsValidTokenWithoutIdentity(): void
+    {
+        $token = Token::issue(appId: self::APP_ID, now: 1000)->toString();
+        $request = Request::create('/', cookies: ['ct_user_token' => $token]);
+        $stack = new RequestStack();
+        $stack->push($request);
+
+        $manager = new CroctManager($stack, self::APP_ID, self::API_KEY);
+
+        self::assertFalse($manager->reconcile());
+    }
+
+    #[TestDox('Re-issues an expired token and reports the change.')]
+    public function testReissuesExpiredToken(): void
+    {
+        $token = Token::issue(appId: self::APP_ID, now: 1000)->withDuration(3600, 1000)->toString();
+        $request = Request::create('/', cookies: ['ct_user_token' => $token]);
+        $stack = new RequestStack();
+        $stack->push($request);
+
+        $manager = new CroctManager($stack, self::APP_ID, self::API_KEY);
+
+        self::assertTrue($manager->reconcile());
     }
 
     #[TestDox('Exposes the visitor-independent browser plug options.')]
@@ -250,7 +272,7 @@ final class CroctManagerTest extends TestCase
     private static function userToken(CroctManager $manager): string
     {
         foreach ($manager->getResponseCookies() as $cookie) {
-            if ($cookie->getName() === 'ct.user_token') {
+            if ($cookie->getName() === 'ct_user_token') {
                 return $cookie->getValue();
             }
         }

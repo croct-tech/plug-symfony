@@ -7,6 +7,7 @@ namespace Croct\Plug\Symfony\Tests\EventListener;
 use Croct\Plug\Symfony\CroctManager;
 use Croct\Plug\Symfony\EventListener\CroctResponseSubscriber;
 use Croct\Plug\Symfony\PrivateResponseMarker;
+use Croct\Plug\Token;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\TestCase;
@@ -47,11 +48,37 @@ final class CroctResponseSubscriberTest extends TestCase
         $response->setPublic();
         $response->setMaxAge(3600);
 
-        $this->createSubscriber()->onResponse($this->createEvent($response, flagged: false));
+        // A valid token is already present, so reconcile re-issues nothing and the response is left
+        // shareable.
+        $token = Token::issue(appId: self::APP_ID, now: 1000)->toString();
+
+        $this->createSubscriber($token)->onResponse($this->createEvent($response, flagged: false));
 
         self::assertTrue($response->headers->hasCacheControlDirective('public'));
         self::assertFalse($response->headers->hasCacheControlDirective('private'));
         self::assertSame([], $response->headers->getCookies());
+    }
+
+    #[TestDox('Writes the session cookies and marks the response private when the token is reissued.')]
+    public function testWritesCookiesWhenTokenReissued(): void
+    {
+        $response = new Response();
+        $response->setPublic();
+        $response->setMaxAge(3600);
+
+        // No token is present, so reconcile issues one; the subscriber must write it and go private
+        // even though the response was never flagged as personalized.
+        $this->createSubscriber()->onResponse($this->createEvent($response, flagged: false, main: true));
+
+        self::assertTrue($response->headers->hasCacheControlDirective('private'));
+        self::assertFalse($response->headers->hasCacheControlDirective('public'));
+
+        $names = \array_map(
+            static fn (Cookie $cookie): string => $cookie->getName(),
+            $response->headers->getCookies(),
+        );
+
+        self::assertContains('ct_user_token', $names);
     }
 
     #[TestDox('Marks a flagged main-request response private and writes the session cookies.')]
@@ -70,8 +97,8 @@ final class CroctResponseSubscriberTest extends TestCase
             $response->headers->getCookies(),
         );
 
-        self::assertContains('ct.client_id', $names);
-        self::assertContains('ct.user_token', $names);
+        self::assertContains('ct_client_id', $names);
+        self::assertContains('ct_user_token', $names);
 
         $httpOnly = \array_map(
             static fn (Cookie $cookie): bool => $cookie->isHttpOnly(),
@@ -95,10 +122,16 @@ final class CroctResponseSubscriberTest extends TestCase
         self::assertSame([], $response->headers->getCookies());
     }
 
-    private function createSubscriber(): CroctResponseSubscriber
+    private function createSubscriber(?string $token = null): CroctResponseSubscriber
     {
+        $stack = new RequestStack();
+
+        if ($token !== null) {
+            $stack->push(Request::create('/', cookies: ['ct_user_token' => $token]));
+        }
+
         return new CroctResponseSubscriber(
-            new CroctManager(new RequestStack(), self::APP_ID, self::API_KEY),
+            new CroctManager($stack, self::APP_ID, self::API_KEY),
             new PrivateResponseMarker(),
         );
     }
