@@ -62,7 +62,7 @@ final class CroctScriptExtensionTest extends TestCase
 
         $output = $twig->render('page');
 
-        self::assertStringContainsString('window.onCroctPlug', $output);
-        self::assertStringContainsString("(function(croct){croct.track('linkOpened')})", $output);
+        self::assertStringContainsString('window.onCroctPlug=window.onCroctPlug||', $output);
+        self::assertStringContainsString("(croct=>{croct.track('linkOpened')})", $output);
     }
 }

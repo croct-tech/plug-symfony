@@ -72,8 +72,8 @@ final class CroctScriptRuntimeTest extends TestCase
         $stack->push(Request::create('/'));
 
         self::assertSame(
-            '<script>(window.onCroctPlug=window.onCroctPlug||function(f){(onCroctPlug.q=onCroctPlug.q||[]).push(f)})'
-            . "(function(croct){croct.track('x')})</script>",
+            '<script>(window.onCroctPlug=window.onCroctPlug||(f=>(onCroctPlug.q=onCroctPlug.q||[]).push(f)))'
+            . "(croct=>{croct.track('x')})</script>",
             $this->createRuntime($stack)->callback("croct.track('x')"),
         );
     }

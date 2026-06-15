@@ -41,6 +41,24 @@ final class CroctResponseSubscriberTest extends TestCase
         );
     }
 
+    #[TestDox('Leaves a request that never matched a route untouched, even when flagged.')]
+    public function testIgnoresNonRoutedRequest(): void
+    {
+        $response = new Response();
+        $response->setPublic();
+        $response->setMaxAge(3600);
+
+        // A 404 probe (e.g. Chrome DevTools' /.well-known request) or the pre-router SDK asset has
+        // no _controller; reconciling it would re-anonymize the token a real visit issued.
+        $event = $this->createEvent($response, flagged: true, main: true, routed: false);
+
+        $this->createSubscriber()->onResponse($event);
+
+        self::assertTrue($response->headers->hasCacheControlDirective('public'));
+        self::assertFalse($response->headers->hasCacheControlDirective('private'));
+        self::assertSame([], $response->headers->getCookies());
+    }
+
     #[TestDox('Leaves a response that was not flagged as personalized untouched.')]
     public function testIgnoresUnflaggedResponse(): void
     {
@@ -136,9 +154,15 @@ final class CroctResponseSubscriberTest extends TestCase
         );
     }
 
-    private function createEvent(Response $response, bool $flagged, bool $main = true): ResponseEvent
+    private function createEvent(Response $response, bool $flagged, bool $main = true, bool $routed = true): ResponseEvent
     {
         $request = new Request();
+
+        // The router sets _controller on requests that matched a route; the subscriber only
+        // reconciles those, leaving stray 404s and pre-router assets alone.
+        if ($routed) {
+            $request->attributes->set('_controller', 'App\Controller\PageController');
+        }
 
         if ($flagged) {
             $request->attributes->set(CroctResponseSubscriber::PERSONALIZED_ATTRIBUTE, true);

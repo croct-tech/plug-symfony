@@ -39,6 +39,11 @@ final class CroctResponseSubscriber implements EventSubscriber
 
     public function onResponse(ResponseEvent $event): void
     {
+        // Only reconcile real page views
+        if (!$event->getRequest()->attributes->has('_controller')) {
+            return;
+        }
+
         $response = $event->getResponse();
 
         // Reconcile the visitor token on the main request: it issues or refreshes the token and
