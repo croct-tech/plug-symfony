@@ -7,6 +7,7 @@ namespace Croct\Plug\Symfony\Tests;
 use Croct\Plug\Croct;
 use Croct\Plug\CroctScript;
 use Croct\Plug\CroctScriptProvider;
+use Croct\Plug\LoadMode;
 use Croct\Plug\Plug;
 use Croct\Plug\Symfony\CroctBundle;
 use Croct\Plug\Symfony\CroctManager;
@@ -54,6 +55,7 @@ final class CroctBundleTest extends TestCase
                 'placement' => 'head',
                 'path' => false,
                 'script_url' => 'https://example.test/plug.js',
+                'mode' => 'async',
             ],
         ]);
 
@@ -85,6 +87,7 @@ final class CroctBundleTest extends TestCase
             'https://example.test/plug.js',
             $container->getDefinition(CroctScriptRuntime::class)->getArgument(2),
         );
+        self::assertSame(LoadMode::ASYNC, $container->getDefinition(CroctScriptRuntime::class)->getArgument(3));
         self::assertFalse($container->hasDefinition(CroctScriptProvider::class));
         self::assertFalse($container->hasDefinition(CroctScriptListener::class));
     }
@@ -118,6 +121,7 @@ final class CroctBundleTest extends TestCase
         // First-party is the default, so the injected src is the first-party path.
         self::assertSame('/_croct/plug.js', $scriptDefinition->getArgument(1));
         self::assertSame('head', $scriptDefinition->getArgument(2));
+        self::assertSame(LoadMode::DEFER, $scriptDefinition->getArgument(3));
 
         self::assertTrue($container->hasDefinition(CroctScriptProvider::class));
         self::assertTrue($container->hasDefinition(CroctScriptListener::class));
@@ -129,6 +133,18 @@ final class CroctBundleTest extends TestCase
             '/_croct/plug.js',
             $container->getDefinition(CroctScriptListener::class)->getArgument('$path'),
         );
+    }
+
+    #[TestDox('Maps the configured sync mode to the load mode enum.')]
+    public function testWiresSyncMode(): void
+    {
+        $container = $this->load([
+            'app_id' => 'app-123',
+            'api_key' => 'key-456',
+            'script' => ['mode' => 'sync'],
+        ]);
+
+        self::assertSame(LoadMode::SYNC, $container->getDefinition(CroctScriptSubscriber::class)->getArgument(3));
     }
 
     #[TestDox('Requires the application ID.')]

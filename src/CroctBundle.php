@@ -8,6 +8,7 @@ use Croct\Plug\Content\ContentProvider;
 use Croct\Plug\Croct;
 use Croct\Plug\CroctScript;
 use Croct\Plug\CroctScriptProvider;
+use Croct\Plug\LoadMode;
 use Croct\Plug\Plug;
 use Croct\Plug\Symfony\DependencyInjection\Compiler\IdentityIntegrationPass;
 use Croct\Plug\Symfony\DependencyInjection\Compiler\StoryblokIntegrationPass;
@@ -95,6 +96,11 @@ final class CroctBundle extends AbstractBundle
                             ->cannotBeEmpty()
                             ->defaultValue(CroctScript::DEFAULT_SCRIPT_URL)
                         ->end()
+                        ->enumNode('mode')
+                            ->info('How the SDK loader is fetched: sync (blocking), defer, or async.')
+                            ->values(['sync', 'defer', 'async'])
+                            ->defaultValue('defer')
+                        ->end()
                     ->end()
                 ->end()
             ->end();
@@ -118,6 +124,12 @@ final class CroctBundle extends AbstractBundle
         // A string path serves the SDK first-party. A false or null value loads it from the CDN.
         $path = \is_string($script['path']) ? $script['path'] : null;
         $scriptSrc = $path ?? $script['script_url'];
+        // The enum node validates the value; the default arm covers the defer default.
+        $mode = match ($script['mode']) {
+            'sync' => LoadMode::SYNC,
+            'async' => LoadMode::ASYNC,
+            default => LoadMode::DEFER,
+        };
 
         $services = $container->services()->defaults()->autowire()->autoconfigure();
 
@@ -159,6 +171,7 @@ final class CroctBundle extends AbstractBundle
                     service(CroctManager::class),
                     $scriptSrc,
                     $script['placement'],
+                    $mode,
                 ]);
         }
 
@@ -169,6 +182,7 @@ final class CroctBundle extends AbstractBundle
                     service(CroctManager::class),
                     service('request_stack'),
                     $scriptSrc,
+                    $mode,
                 ]);
 
             $services->set(CroctScriptExtension::class);

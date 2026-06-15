@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Croct\Plug\Symfony\EventListener;
 
 use Croct\Plug\CroctScript;
+use Croct\Plug\LoadMode;
 use Croct\Plug\Symfony\CroctManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface as EventSubscriber;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -29,11 +30,18 @@ final class CroctScriptSubscriber implements EventSubscriber
 
     private string $placement;
 
-    public function __construct(CroctManager $manager, string $scriptSrc, string $placement)
-    {
+    private LoadMode $mode;
+
+    public function __construct(
+        CroctManager $manager,
+        string $scriptSrc,
+        string $placement,
+        LoadMode $mode = LoadMode::DEFER,
+    ) {
         $this->manager = $manager;
         $this->scriptSrc = $scriptSrc;
         $this->placement = $placement;
+        $this->mode = $mode;
     }
 
     /**
@@ -84,6 +92,7 @@ final class CroctScriptSubscriber implements EventSubscriber
             $this->scriptSrc,
             $this->manager->getPlugOptions(),
             \is_string($nonce) ? $nonce : null,
+            $this->mode,
         );
 
         $response->setContent(\substr_replace($content, $script, $position, 0));

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Croct\Plug\Symfony\Tests\EventListener;
 
 use Croct\Plug\CroctScript;
+use Croct\Plug\LoadMode;
 use Croct\Plug\Symfony\CroctManager;
 use Croct\Plug\Symfony\EventListener\CroctScriptSubscriber;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -84,6 +85,18 @@ final class CroctScriptSubscriberTest extends TestCase
         );
     }
 
+    #[TestDox('Injects the loader using the configured mode.')]
+    public function testInjectsConfiguredMode(): void
+    {
+        $response = new Response('<html><body></body></html>');
+        $this->dispatch(Request::create('/'), $response, mode: LoadMode::SYNC);
+
+        $content = (string) $response->getContent();
+
+        self::assertStringContainsString('<script src="' . self::LOADER . '"></script>', $content);
+        self::assertStringNotContainsString('defer', $content);
+    }
+
     #[TestDox('Never injects twice into the same request.')]
     public function testInjectsOnlyOnce(): void
     {
@@ -158,9 +171,14 @@ final class CroctScriptSubscriberTest extends TestCase
         self::assertSame('just a fragment', $response->getContent());
     }
 
-    private function dispatch(Request $request, Response $response, bool $main = true, string $placement = 'body'): void
-    {
-        $subscriber = new CroctScriptSubscriber($this->manager(), self::LOADER, $placement);
+    private function dispatch(
+        Request $request,
+        Response $response,
+        bool $main = true,
+        string $placement = 'body',
+        LoadMode $mode = LoadMode::DEFER,
+    ): void {
+        $subscriber = new CroctScriptSubscriber($this->manager(), self::LOADER, $placement, $mode);
 
         $subscriber->onResponse(
             new ResponseEvent(
