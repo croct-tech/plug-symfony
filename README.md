@@ -35,7 +35,7 @@ Run this command to install the bundle:
 composer require croct/plug-symfony
 ```
 
-See our [quick start guide](https://docs.croct.com/reference/sdk/symfony/installation) for more details.
+See our [quick start guide](https://docs.croct.com/reference/sdk/symfony/integration) for more details.
 
 ## Documentation
 
