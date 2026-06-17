@@ -154,8 +154,12 @@ final class CroctResponseSubscriberTest extends TestCase
         );
     }
 
-    private function createEvent(Response $response, bool $flagged, bool $main = true, bool $routed = true): ResponseEvent
-    {
+    private function createEvent(
+        Response $response,
+        bool $flagged,
+        bool $main = true,
+        bool $routed = true,
+    ): ResponseEvent {
         $request = new Request();
 
         // The router sets _controller on requests that matched a route; the subscriber only

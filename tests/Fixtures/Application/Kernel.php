@@ -23,7 +23,7 @@ final class Kernel extends BaseKernel
     private ?string $token = null;
 
     /**
-     * @return iterable<\Symfony\Component\HttpKernel\Bundle\BundleInterface>
+     * @return iterable<CroctBundle|FrameworkBundle>
      */
     public function registerBundles(): iterable
     {
