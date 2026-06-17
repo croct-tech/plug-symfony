@@ -25,16 +25,16 @@
     "require": {
         "php": "^8.2",
         "ext-json": "*",
-        "croct/plug-php": "dev-initial-version as 1.0.0",
+        "croct/plug-php": "0.1.0",
         "nyholm/psr7": "^1.8",
         "psr/cache": "^3.0",
-        "symfony/cache": "^7.4 || ^8.0",
-        "symfony/config": "^7.4 || ^8.0",
-        "symfony/dependency-injection": "^7.4 || ^8.0",
-        "symfony/event-dispatcher": "^7.4 || ^8.0",
-        "symfony/http-client": "^7.4 || ^8.0",
-        "symfony/http-foundation": "^7.4 || ^8.0",
-        "symfony/http-kernel": "^7.4 || ^8.0",
+        "symfony/cache": "^6.4 || ^7.4 || ^8.0",
+        "symfony/config": "^6.4 || ^7.4 || ^8.0",
+        "symfony/dependency-injection": "^6.4 || ^7.4 || ^8.0",
+        "symfony/event-dispatcher": "^6.4 || ^7.4 || ^8.0",
+        "symfony/http-client": "^6.4 || ^7.4 || ^8.0",
+        "symfony/http-foundation": "^6.4 || ^7.4 || ^8.0",
+        "symfony/http-kernel": "^6.4 || ^7.4 || ^8.0",
         "symfony/service-contracts": "^3.6"
     },
     "require-dev": {
@@ -48,9 +48,9 @@
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5",
         "squizlabs/php_codesniffer": "^4.0",
-        "symfony/browser-kit": "^7.4 || ^8.0",
-        "symfony/framework-bundle": "^7.4 || ^8.0",
-        "symfony/security-bundle": "^7.4 || ^8.0",
+        "symfony/browser-kit": "^6.4 || ^7.4 || ^8.0",
+        "symfony/framework-bundle": "^6.4 || ^7.4 || ^8.0",
+        "symfony/security-bundle": "^6.4 || ^7.4 || ^8.0",
         "twig/twig": "^3.0"
     },
     "suggest": {
@@ -58,19 +58,6 @@
         "symfony/security-bundle": "Enables built-in user identification from the authenticated user.",
         "twig/twig": "Enables the {{ croct_script() }} Twig function for placing the client bootstrap manually."
     },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "/Users/marcospassos/PhpstormProjects/plug-php",
-            "options": {
-                "symlink": true
-            }
-        },
-        {
-            "type": "vcs",
-            "url": "https://github.com/croct-tech/plug-php"
-        }
-    ],
     "prefer-stable": true,
     "autoload": {
         "psr-4": {
