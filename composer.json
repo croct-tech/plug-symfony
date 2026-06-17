@@ -1,67 +1,90 @@
 {
-  "name": "croct/plug-symfony",
-  "description": "A brief description about the project.",
-  "license": "proprietary",
-  "type": "library",
-  "keywords": [
-    "croct",
-    "related",
-    "keyword"
-  ],
-  "authors": [
-    {
-      "name": "Croct",
-      "email": "lib+project-php@croct.com",
-      "homepage": "https://croct.com"
+    "name": "croct/plug-symfony",
+    "description": "Symfony bundle to plug your Symfony applications into Croct.",
+    "license": "MIT",
+    "type": "symfony-bundle",
+    "keywords": [
+        "croct",
+        "personalization",
+        "symfony",
+        "bundle",
+        "php"
+    ],
+    "authors": [
+        {
+            "name": "Croct",
+            "email": "lib+plug-symfony@croct.com",
+            "homepage": "https://croct.com"
+        }
+    ],
+    "homepage": "https://github.com/croct-tech/plug-symfony",
+    "support": {
+        "issues": "https://github.com/croct-tech/plug-symfony/issues",
+        "source": "https://github.com/croct-tech/plug-symfony"
+    },
+    "require": {
+        "php": "^8.2",
+        "ext-json": "*",
+        "croct/plug-php": "0.1.0",
+        "nyholm/psr7": "^1.8",
+        "psr/cache": "^3.0",
+        "symfony/cache": "^6.4 || ^7.4 || ^8.0",
+        "symfony/config": "^6.4 || ^7.4 || ^8.0",
+        "symfony/dependency-injection": "^6.4 || ^7.4 || ^8.0",
+        "symfony/event-dispatcher": "^6.4 || ^7.4 || ^8.0",
+        "symfony/http-client": "^6.4 || ^7.4 || ^8.0",
+        "symfony/http-foundation": "^6.4 || ^7.4 || ^8.0",
+        "symfony/http-kernel": "^6.4 || ^7.4 || ^8.0",
+        "symfony/service-contracts": "^3.6"
+    },
+    "require-dev": {
+        "croct/coding-standard": "^0.4.5",
+        "ergebnis/composer-normalize": "^2.28",
+        "php-http/mock-client": "^1.6",
+        "phpstan/extension-installer": "^1.4",
+        "phpstan/phpstan": "^2.2",
+        "phpstan/phpstan-deprecation-rules": "^2.0",
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^11.5",
+        "squizlabs/php_codesniffer": "^4.0",
+        "symfony/browser-kit": "^6.4 || ^7.4 || ^8.0",
+        "symfony/framework-bundle": "^6.4 || ^7.4 || ^8.0",
+        "symfony/security-bundle": "^6.4 || ^7.4 || ^8.0",
+        "twig/twig": "^3.0"
+    },
+    "suggest": {
+        "croct/plug-storyblok": "Serves Croct content inside Storyblok stories; auto-wired alongside the Storyblok bundle.",
+        "symfony/security-bundle": "Enables built-in user identification from the authenticated user.",
+        "twig/twig": "Enables the {{ croct_script() }} Twig function for placing the client bootstrap manually."
+    },
+    "prefer-stable": true,
+    "autoload": {
+        "psr-4": {
+            "Croct\\Plug\\Symfony\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Croct\\Plug\\Symfony\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "ergebnis/composer-normalize": true,
+            "php-http/discovery": true,
+            "phpstan/extension-installer": true
+        }
+    },
+    "scripts": {
+        "test": [
+            "composer validate",
+            "composer normalize --dry-run",
+            "mkdir -p .cache",
+            "phpcs",
+            "phpstan analyse --memory-limit=512M",
+            "phpunit"
+        ]
     }
-  ],
-  "homepage": "https://github.com/croct-tech/project-php",
-  "require": {
-    "php": "^8.0"
-  },
-  "require-dev": {
-    "croct/coding-standard": "^0.4",
-    "ergebnis/composer-normalize": "^2.28",
-    "phpstan/phpstan": "^1.8",
-    "phpstan/phpstan-deprecation-rules": "^1.0",
-    "phpstan/phpstan-phpunit": "^1.1",
-    "phpstan/phpstan-strict-rules": "^1.4",
-    "phpunit/phpunit": "^10.0",
-    "squizlabs/php_codesniffer": "^3.7"
-  },
-  "repositories": [
-    {
-      "type": "composer",
-      "url": "https://croct.repo.repman.io",
-      "secure-http": true
-    }
-  ],
-  "prefer-stable": true,
-  "autoload": {
-    "psr-4": {
-      "Croct\\Project\\": "src/"
-    }
-  },
-  "autoload-dev": {
-    "psr-4": {
-      "Croct\\Project\\Tests\\": "tests/"
-    }
-  },
-  "config": {
-    "allow-plugins": {
-      "dealerdirect/phpcodesniffer-composer-installer": true,
-      "ergebnis/composer-normalize": true,
-      "phpstan/extension-installer": false
-    }
-  },
-  "scripts": {
-    "test": [
-      "composer validate",
-      "composer normalize --dry-run",
-      "mkdir -p .cache",
-      "phpcs",
-      "phpstan analyse",
-      "phpunit"
-    ]
-  }
 }

@@ -18,9 +18,13 @@
     <php>
         <ini name="error_reporting" value="-1"/>
         <ini name="memory_limit" value="-1"/>
+        <env name="APP_ENV" value="test" force="true"/>
+        <env name="APP_DEBUG" value="0" force="true"/>
+        <env name="KERNEL_CLASS" value="Croct\Plug\Symfony\Tests\Fixtures\Application\Kernel"/>
+        <env name="CROCT_API_KEY" value="11111111-2222-4333-8444-555555555555"/>
     </php>
     <testsuites>
-        <testsuite name="Croct PHP Project Test Suite">
+        <testsuite name="Croct Plug Symfony Test Suite">
             <directory>./tests/</directory>
         </testsuite>
     </testsuites>
