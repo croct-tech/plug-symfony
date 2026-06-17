@@ -13,7 +13,7 @@
   Bring dynamic, personalized content natively into your Symfony applications.
 </p>
 <div align="center">
-    <strong>📘 <a href="https://docs.croct.com/reference/sdk/symfony/installation">Quick start &rarr;</a></strong>
+    <strong>📘 <a href="https://docs.croct.com/reference/sdk/symfony/integration">Quick start &rarr;</a></strong>
 </div>
 <br/>
 <p align="center">
@@ -39,7 +39,7 @@ See our [quick start guide](https://docs.croct.com/reference/sdk/symfony/integra
 
 ## Documentation
 
-Visit our [official documentation](https://docs.croct.com/reference/sdk/symfony/installation).
+Visit our [official documentation](https://docs.croct.com/reference/sdk/symfony/integration).
 
 ## Support
 
