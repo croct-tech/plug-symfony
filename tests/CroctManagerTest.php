@@ -186,11 +186,20 @@ final class CroctManagerTest extends TestCase
             cookieDomain: 'example.com',
         );
 
-        $options = $manager->getPlugOptions();
+        $options = $manager->getPlug()->getPlugOptions();
 
         self::assertSame(self::APP_ID, $options['appId']);
         self::assertTrue($options['disableCidMirroring']);
         self::assertArrayHasKey('cookie', $options);
+        self::assertArrayNotHasKey('debug', $options);
+    }
+
+    #[TestDox('Forwards the debug flag to the browser plug options when enabled.')]
+    public function testForwardsDebugToPlugOptions(): void
+    {
+        $manager = new CroctManager(new RequestStack(), self::APP_ID, self::API_KEY, debug: true);
+
+        self::assertTrue($manager->getPlug()->getPlugOptions()['debug'] ?? null);
     }
 
     #[TestDox('Flags the current request as personalized when the visitor session is used.')]

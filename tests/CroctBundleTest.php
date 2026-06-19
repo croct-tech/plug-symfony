@@ -34,6 +34,7 @@ final class CroctBundleTest extends TestCase
             'app_id' => 'app-123',
             'api_key' => 'key-456',
             'base_endpoint_url' => 'https://api.example.test',
+            'debug' => true,
             'token_duration' => 7200,
             'locale' => [
                 'enabled' => false,
@@ -69,6 +70,7 @@ final class CroctBundleTest extends TestCase
         self::assertSame('example.com', $arguments[6]);
         self::assertFalse($arguments[7]);
         self::assertSame('lax', $arguments[8]);
+        self::assertTrue($arguments['$debug']);
         self::assertSame(7200, $arguments['$tokenDuration']);
 
         self::assertFalse($container->getParameter('croct.identity.enabled'));
@@ -108,6 +110,7 @@ final class CroctBundleTest extends TestCase
         self::assertNull($arguments[6]);
         self::assertTrue($arguments[7]);
         self::assertSame('none', $arguments[8]);
+        self::assertSame('%kernel.debug%', $arguments['$debug']);
         self::assertSame(Croct::DEFAULT_TOKEN_DURATION, $arguments['$tokenDuration']);
 
         self::assertTrue($container->getParameter('croct.identity.enabled'));

@@ -90,7 +90,7 @@ final class CroctScriptSubscriber implements EventSubscriber
 
         $script = (string) new CroctScript(
             $this->scriptSrc,
-            $this->manager->getPlugOptions(),
+            $this->manager->getPlug()->getPlugOptions(),
             \is_string($nonce) ? $nonce : null,
             $this->mode,
         );
