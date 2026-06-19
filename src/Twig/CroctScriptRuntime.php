@@ -44,7 +44,12 @@ final class CroctScriptRuntime implements RuntimeExtension
     {
         $this->requestStack->getCurrentRequest()?->attributes->set(CroctScriptSubscriber::SCRIPT_ATTRIBUTE, true);
 
-        return (string) new CroctScript($this->scriptSrc, $this->manager->getPlugOptions(), $nonce, $this->mode);
+        return (string) new CroctScript(
+            $this->scriptSrc,
+            $this->manager->getPlug()->getPlugOptions(),
+            $nonce,
+            $this->mode,
+        );
     }
 
     public function callback(string $body): string
