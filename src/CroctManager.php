@@ -52,6 +52,8 @@ final class CroctManager implements ResettableService
 
     private ?Logger $logger;
 
+    private bool $debug;
+
     private int $tokenDuration;
 
     private ?IdentityResolver $identity;
@@ -73,6 +75,7 @@ final class CroctManager implements ResettableService
         ?LocaleResolver $localeResolver = null,
         ?ContentProvider $contentProvider = null,
         ?Logger $logger = null,
+        bool $debug = false,
         int $tokenDuration = Croct::DEFAULT_TOKEN_DURATION,
         ?IdentityResolver $identity = null,
     ) {
@@ -88,6 +91,7 @@ final class CroctManager implements ResettableService
         $this->localeResolver = $localeResolver ?? new RequestLocaleResolver($requestStack);
         $this->contentProvider = $contentProvider;
         $this->logger = $logger;
+        $this->debug = $debug;
         $this->tokenDuration = $tokenDuration;
         $this->identity = $identity;
     }
@@ -116,23 +120,6 @@ final class CroctManager implements ResettableService
         $resolved = $this->getPlug()->getUserToken();
 
         return $stored === null || !$stored->equals($resolved);
-    }
-
-    /**
-     * Returns the visitor-independent options for bootstrapping the client-side SDK.
-     *
-     * Built without resolving the Plug so it stays cache-neutral and works before the credentials
-     * are validated. The visitor identity is read client-side from the cookies.
-     *
-     * @return array<string, mixed>
-     */
-    public function getPlugOptions(): array
-    {
-        return [
-            'appId' => $this->appId,
-            'disableCidMirroring' => true,
-            'cookie' => $this->createCookieConfiguration()->toBrowserCookies(),
-        ];
     }
 
     public function reset(): void
@@ -184,6 +171,7 @@ final class CroctManager implements ResettableService
             identity: $this->identity,
             baseEndpointUrl: $this->baseEndpointUrl,
             tokenDuration: $this->tokenDuration,
+            debug: $this->debug,
             contentProvider: $this->contentProvider,
             context: $context,
             logger: $this->logger,

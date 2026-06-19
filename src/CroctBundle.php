@@ -39,6 +39,10 @@ final class CroctBundle extends AbstractBundle
                 ->scalarNode('app_id')->isRequired()->cannotBeEmpty()->end()
                 ->scalarNode('api_key')->isRequired()->cannotBeEmpty()->end()
                 ->scalarNode('base_endpoint_url')->defaultNull()->end()
+                ->booleanNode('debug')
+                    ->info('Forwards a debug flag to the browser SDK. Defaults to kernel.debug.')
+                    ->defaultNull()
+                ->end()
                 ->integerNode('token_duration')
                     ->info('Lifetime in seconds of the issued visitor tokens.')
                     ->defaultValue(Croct::DEFAULT_TOKEN_DURATION)
@@ -148,6 +152,8 @@ final class CroctBundle extends AbstractBundle
             // Optional integrations: a content provider for fallback content and the app logger.
             ->arg('$contentProvider', service(ContentProvider::class)->nullOnInvalid())
             ->arg('$logger', service(LoggerInterface::class)->nullOnInvalid())
+            // CROCT_DEBUG (via config) overrides; null falls back to kernel.debug.
+            ->arg('$debug', $config['debug'] ?? '%kernel.debug%')
             ->arg('$tokenDuration', $config['token_duration'])
             // Clears the per-request facade between requests in long-running workers (FrankenPHP, RoadRunner).
             ->tag('kernel.reset', ['method' => 'reset']);

@@ -192,7 +192,7 @@ final class CroctScriptSubscriberTest extends TestCase
 
     private function expectedScript(?string $nonce = null): string
     {
-        return (string) new CroctScript(self::LOADER, $this->manager()->getPlugOptions(), $nonce);
+        return (string) new CroctScript(self::LOADER, $this->manager()->getPlug()->getPlugOptions(), $nonce);
     }
 
     private function manager(): CroctManager
