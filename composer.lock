@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d02cca72f232979ea8b550172ea0b5fd",
+    "content-hash": "e55c3a78f123581debb3445daf99de7d",
     "packages": [
         {
             "name": "croct/plug-php",
-            "version": "0.1.0",
+            "version": "0.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/croct-tech/plug-php.git",
-                "reference": "82c38a93f303ba77ef1e066c284d7b949d8f8ac5"
+                "reference": "35f3a1826c5c9e6dcd2be164c35484e1085a4164"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/croct-tech/plug-php/zipball/82c38a93f303ba77ef1e066c284d7b949d8f8ac5",
-                "reference": "82c38a93f303ba77ef1e066c284d7b949d8f8ac5",
+                "url": "https://api.github.com/repos/croct-tech/plug-php/zipball/35f3a1826c5c9e6dcd2be164c35484e1085a4164",
+                "reference": "35f3a1826c5c9e6dcd2be164c35484e1085a4164",
                 "shasum": ""
             },
             "require": {
@@ -97,7 +97,7 @@
                 "issues": "https://github.com/croct-tech/plug-php/issues",
                 "source": "https://github.com/croct-tech/plug-php"
             },
-            "time": "2026-06-17T17:59:03+00:00"
+            "time": "2026-06-19T19:23:59+00:00"
         },
         {
             "name": "graham-campbell/result-type",
